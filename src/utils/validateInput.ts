@@ -1,15 +1,15 @@
-import { z } from "zod"
+import { z } from "zod";
 
 function url(url: string) {
-  const urlSchema = z.string().url()
+  const urlSchema = z.string().url();
 
-  return urlSchema.safeParse(url).success
+  return urlSchema.safeParse(url).success;
 }
 
 function email(email: string) {
-  const emailSchema = z.string().email()
+  const emailSchema = z.string().email();
 
-  return emailSchema.safeParse(email).success
+  return emailSchema.safeParse(email).success;
 }
 
-export const validateInput = { url, email }
+export const validateInput = { url, email };

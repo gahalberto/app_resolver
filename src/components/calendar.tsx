@@ -2,14 +2,14 @@ import {
   Calendar as RNCalendar,
   CalendarProps,
   LocaleConfig,
-} from "react-native-calendars"
-import { ptBR } from "@/utils/localeCalendarConfig"
+} from "react-native-calendars";
+import { ptBR } from "@/utils/localeCalendarConfig";
 
-LocaleConfig.locales["pt-br"] = ptBR
-LocaleConfig.defaultLocale = "pt-br"
+LocaleConfig.locales["pt-br"] = ptBR;
+LocaleConfig.defaultLocale = "pt-br";
 
-import { colors } from "@/styles/colors"
-import { fontFamily } from "@/styles/fontFamily"
+import { colors } from "@/styles/colors";
+import { fontFamily } from "@/styles/fontFamily";
 
 export function Calendar({ ...rest }: CalendarProps) {
   return (
@@ -35,5 +35,5 @@ export function Calendar({ ...rest }: CalendarProps) {
       }}
       {...rest}
     />
-  )
+  );
 }
