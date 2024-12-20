@@ -253,6 +253,8 @@ export default function Index() {
         </Text>
       </Text>
 
+      <Text className="text-white">Login</Text>
+
       <Modal
         title="Selecionar datas"
         subtitle="Selecione a data de ida e volta de viagem"

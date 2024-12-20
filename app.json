@@ -14,13 +14,15 @@
       "backgroundColor": "#O9090B"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.planner"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#O9090B"
-      }
+      },
+      "package": "com.anonymous.planner"
     },
     "web": {
       "bundler": "metro",
