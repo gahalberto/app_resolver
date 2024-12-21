@@ -1,63 +1,112 @@
-import {
+import React, {
   createContext,
   useContext,
   useState,
   ReactNode,
   useEffect,
 } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { userStorage } from "@/storage/user";
+import { api } from "@/server/api";
+import { router } from "expo-router";
 
-type User = {
+interface User {
   id: string;
   name: string;
   email: string;
-};
+  token: string;
+}
 
-type UserContextType = {
+interface RegisterProps {
+  name: string;
+  phone: string;
+  email: string;
+  password: string;
+}
+
+interface UserContextData {
   user: User | null;
-  login: (user: User) => void;
-  logout: () => void;
-};
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  register: (data: RegisterProps) => Promise<void>; // Adiciona função de registro
+}
 
-// Criar o contexto
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextData | undefined>(undefined);
 
-// Provedor do contexto
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Carregar usuário do AsyncStorage ao iniciar
   useEffect(() => {
     const loadUser = async () => {
       const storedUser = await userStorage.get();
       if (storedUser) {
         setUser(storedUser);
+        api.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${storedUser.token}`;
       }
+      setIsLoading(false);
     };
     loadUser();
   }, []);
 
-  // Função de login que salva o usuário no contexto e AsyncStorage
-  const login = (user: User) => {
-    setUser(user);
-    AsyncStorage.setItem("@planner:userId", JSON.stringify(user));
+  // Login
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await api.post("/login", { email, password });
+      const { user, token } = response.data;
+
+      const userData = { ...user, token };
+      setUser(userData);
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      await userStorage.save(userData);
+
+      router.push("/mashguiach");
+    } catch (error) {
+      console.error("Erro no login:", error);
+      throw new Error("Falha ao autenticar");
+    }
   };
 
-  // Função de logout (remove o usuário)
+  // Registro (Com login automático)
+  const register = async ({ name, phone, email, password }: RegisterProps) => {
+    try {
+      const response = await api.post("/register", {
+        name,
+        phone,
+        email,
+        password,
+      });
+
+      const { user, token } = response.data;
+
+      const userData = { ...user, token };
+      setUser(userData);
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      await userStorage.save(userData);
+
+      router.push("/mashguiach");
+    } catch (error) {
+      console.error("Erro no registro:", error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
+    await userStorage.remove();
     setUser(null);
-    await AsyncStorage.removeItem("@planner:userId");
+    delete api.defaults.headers.common["Authorization"];
+    router.push("/");
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout }}>
+    <UserContext.Provider value={{ user, isLoading, login, logout, register }}>
       {children}
     </UserContext.Provider>
   );
 }
 
-// Hook personalizado para acessar o contexto
 export const useUser = () => {
   const context = useContext(UserContext);
   if (!context) {

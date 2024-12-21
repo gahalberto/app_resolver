@@ -15,16 +15,12 @@ import {
   ArrowLeft,
 } from "lucide-react-native";
 import { colors } from "@/styles/colors";
-import { calendarUtils, DatesSelected } from "@/utils/calendarUtils";
 
 import { Button } from "@/components/button";
 import { useEffect, useState } from "react";
-import { tripStorage } from "@/storage/trip";
 import { router } from "expo-router";
-import { tripServer } from "@/server/trip-server";
 import { Loading } from "@/components/loading";
-import { authServer } from "@/server/auth-server";
-import { set, z } from "zod";
+import { z } from "zod";
 import { userStorage } from "@/storage/user";
 import { useUser } from "@/contexts/UserContext";
 
@@ -73,7 +69,7 @@ enum MODAL {
 }
 
 export default function Index() {
-  const { login } = useUser();
+  const { login, register } = useUser();
 
   // LOADING
   const [isLoadingRegister, setIsLoadingRegister] = useState(false);
@@ -103,52 +99,32 @@ export default function Index() {
   });
 
   async function handleLoginPage(formData: any) {
+    if (!formData.email || !formData.password) {
+      Alert.alert("Erro", "Preencha todos os campos");
+      return;
+    }
+
     try {
       setIsLoadingLogin(true);
-      const response = await authServer.Login(
-        formData.email,
-        formData.password
-      );
-      if (response) {
-        // Salva no AsyncStorage e atualiza o contexto
-        await saveUser(
-          response.id,
-          response.name,
-          response.email,
-          response.token
-        );
-        login({
-          id: response.id,
-          name: response.name,
-          email: response.email,
-        });
-        Alert.alert("Sucesso", "Login realizado com sucesso!");
-        router.navigate(`/mashguiach`);
-      }
+      await login(formData.email, formData.password);
+      Alert.alert("Sucesso", "Login realizado com sucesso");
     } catch (error) {
-      setIsLoadingLogin(false);
-      console.log(error);
-      Alert.alert("Erro", "Não foi possível fazer login.");
+      Alert.alert("Erro", "Credenciais inválidas");
     } finally {
       setIsLoadingLogin(false);
     }
   }
 
   async function onSubmitRegisterOne(formData: any) {
+    setIsLoadingRegister(true);
     try {
-      setIsLoadingRegister(true);
-      const newUser = await authServer.Register({
+      await register({
         name: formData.name,
+        email: formData.email,
         phone: formData.phone,
-        email: formData.email.toLowerCase(),
         password: formData.password,
       });
-      console.log({ newUser });
-      if (newUser) {
-        Alert.alert("Nova conta criada", "Nova conta cadastrada com sucesso!");
-        await saveUser(newUser.id, newUser.name, newUser.email, newUser.token);
-      }
-      router.navigate(`/mashguiach`);
+      Alert.alert("Sucesso", "Conta criada e login realizado");
     } catch (error: any) {
       setIsLoadingRegister(false);
       console.log(error.response);
@@ -161,23 +137,6 @@ export default function Index() {
       }
     } finally {
       setIsLoadingRegister(false);
-    }
-  }
-
-  async function saveUser(
-    id: string,
-    name: string,
-    email: string,
-    token: string
-  ) {
-    try {
-      const user = { id, name, email };
-      await userStorage.save({ id, name, email, token });
-      login(user); // Atualiza o contexto com o novo usuário
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar o usuário.");
-      console.log(error);
-      throw error;
     }
   }
 

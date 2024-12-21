@@ -1,23 +1,31 @@
-import { Button } from "@/components/button";
 import { useUser } from "@/contexts/UserContext";
-import { userStorage } from "@/storage/user";
-import { router } from "expo-router";
-import { Text, View } from "react-native";
+import {
+  View,
+  Text,
+  Button,
+  ActivityIndicator,
+  SafeAreaView,
+} from "react-native";
 
-export default function Dashboard() {
-  const user = useUser();
+export default function HomePage() {
+  const { user, logout, isLoading } = useUser();
 
-  function handleLogout() {
-    userStorage.remove();
-    router.back();
+  if (isLoading) {
+    return <ActivityIndicator size="large" />;
+  }
+
+  if (!user) {
+    return (
+      <View>
+        <Text>Você não está logado</Text>
+      </View>
+    );
   }
 
   return (
-    <View>
-      <Text>Bem-vindo ao Dashboard Sr. {user.user?.email}</Text>
-      <Button onPress={handleLogout}>
-        <Button.Title>Fazer logout</Button.Title>
-      </Button>
-    </View>
+    <SafeAreaView>
+      <Text>Bem-vindo, {user.name}!</Text>
+      <Button title="Logout" onPress={logout} />
+    </SafeAreaView>
   );
 }
