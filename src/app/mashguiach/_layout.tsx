@@ -1,11 +1,9 @@
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Drawer } from "expo-router/drawer";
-import { Slot } from "expo-router";
-import { UserProvider } from "@/contexts/UserContext";
-import { View } from "react-native";
 import { Home, IceCream } from "lucide-react-native";
 import { colors } from "@/styles/colors";
 import CustomDrawerContent from "@/components/CustomDrawerContent";
+import { Text } from "react-native";
 
 export default function Layout() {
   return (
@@ -40,7 +38,7 @@ export default function Layout() {
         <Drawer.Screen
           name="index"
           options={{
-            drawerLabel: "Início",
+            drawerLabel: () => <Text>Dashboard</Text>,
             headerTitle: "Dashboard",
             title: "Dashboard",
             drawerIcon: () => <Home size={24} />,
@@ -50,13 +48,6 @@ export default function Layout() {
           name="courses"
           options={{
             title: "Cursos",
-          }}
-        />
-
-        <Drawer.Screen
-          name="(tabs)"
-          options={{
-            title: "Tabs",
           }}
         />
       </Drawer>
