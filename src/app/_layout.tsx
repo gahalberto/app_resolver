@@ -1,6 +1,9 @@
 import "@/styles/global.css";
 import "@/utils/dayjsLocaleConfig";
 
+// Dourado = #ba9a5f
+// Azul = #232c59
+
 import { Slot } from "expo-router";
 import { View, StatusBar } from "react-native";
 import {
@@ -11,6 +14,7 @@ import {
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
 import { Loading } from "@/components/loading";
+import { UserProvider } from "@/contexts/UserContext";
 
 export default function Layout() {
   const [fontsLoaded] = useFonts({
@@ -25,13 +29,15 @@ export default function Layout() {
   }
 
   return (
-    <View className="flex-1 bg-zinc-950">
-      <StatusBar
-        barStyle={"light-content"}
-        backgroundColor={"transparent"}
-        translucent
-      />
-      <Slot />
-    </View>
+    <UserProvider>
+      <View className="flex-1 bg-bkblue-800">
+        <StatusBar
+          barStyle={"light-content"}
+          backgroundColor={"transparent"}
+          translucent
+        />
+        <Slot />
+      </View>
+    </UserProvider>
   );
 }

@@ -1,21 +1,21 @@
-import { ReactNode } from "react"
+import { ReactNode } from "react";
 import {
   TextInput,
   TextInputProps,
   View,
   ViewProps,
   Platform,
-} from "react-native"
-import clsx from "clsx"
+} from "react-native";
+import clsx from "clsx";
 
-import { colors } from "@/styles/colors"
+import { colors } from "@/styles/colors";
 
-type Variants = "primary" | "secondary" | "tertiary"
+type Variants = "primary" | "secondary" | "tertiary";
 
 type InputProps = ViewProps & {
-  children: ReactNode
-  variant?: Variants
-}
+  children: ReactNode;
+  variant?: Variants;
+};
 
 function Input({
   children,
@@ -38,21 +38,21 @@ function Input({
     >
       {children}
     </View>
-  )
+  );
 }
 
 function Field({ ...rest }: TextInputProps) {
   return (
     <TextInput
-      className="flex-1 text-zinc-100 text-lg font-regular"
+      className="flex-1 text-zinc-100 text-lg font-regular space-x-4"
       placeholderTextColor={colors.zinc[400]}
       cursorColor={colors.zinc[100]}
       selectionColor={Platform.OS === "ios" ? colors.zinc[100] : undefined}
       {...rest}
     />
-  )
+  );
 }
 
-Input.Field = Field
+Input.Field = Field;
 
-export { Input }
+export { Input };

@@ -1,5 +1,8 @@
 import { Input } from "@/components/input";
 import { View, Text, SafeAreaView, Image, Keyboard, Alert } from "react-native";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, Controller } from "react-hook-form";
+
 import {
   MapPin,
   Calendar as IconCalendar,
@@ -7,26 +10,60 @@ import {
   UserRoundPlus,
   ArrowRight,
   AtSign,
+  Lock,
+  User,
+  ArrowLeft,
 } from "lucide-react-native";
 import { colors } from "@/styles/colors";
 import { calendarUtils, DatesSelected } from "@/utils/calendarUtils";
 
 import { Button } from "@/components/button";
 import { useEffect, useState } from "react";
-import { Modal } from "@/components/modal";
-import { Calendar } from "@/components/calendar";
-import { DateData } from "react-native-calendars";
-import dayjs from "dayjs";
-import { GuestEmail } from "@/components/email";
-import { validateInput } from "@/utils/validateInput";
 import { tripStorage } from "@/storage/trip";
 import { router } from "expo-router";
 import { tripServer } from "@/server/trip-server";
 import { Loading } from "@/components/loading";
+import { authServer } from "@/server/auth-server";
+import { set, z } from "zod";
+import { userStorage } from "@/storage/user";
+import { useUser } from "@/contexts/UserContext";
+
+// Esquema de validação usando Zod para LOGIN
+const loginSchema = z.object({
+  email: z
+    .string()
+    .email("Digite um e-mail válido")
+    .min(1, "Email é obrigatório"),
+  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
+});
+
+// Esquema de validação usando Zod para REGISTER
+const registerSchema = z
+  .object({
+    name: z.string({ message: "Campo obrigatório" }),
+    email: z
+      .string({ message: "Campo obrigatório" })
+      .email({ message: "Email inválido" }),
+    phone: z
+      .string({ message: "Campo obrigatório" })
+      .min(6, { message: "Telefone é obrigatório" }),
+    password: z
+      .string({ message: "Campo obrigatório" })
+      .min(6, { message: "Senha deve ter pelo menos 6 caracteres" }),
+    confirmPassword: z
+      .string({ message: "Campo obrigatório" })
+      .min(6, { message: "Confirmação de senha é obrigatória" }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "As senhas não coincidem",
+    path: ["confirmPassword"], // Caminho para o campo que está com erro
+  });
+
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 enum StepForm {
-  TRIP_DETAILS = 1,
-  ADD_EMAIL = 2,
+  LOGIN = 1,
+  REGISTER = 2,
 }
 
 enum MODAL {
@@ -36,136 +73,141 @@ enum MODAL {
 }
 
 export default function Index() {
+  const { login } = useUser();
+
   // LOADING
+  const [isLoadingRegister, setIsLoadingRegister] = useState(false);
+  const [isLoadingLogin, setIsLoadingLogin] = useState(false);
   const [isCreatingTrip, setIsCreatingTrip] = useState(false);
-  const [isGettingTrip, setIsGettingTrip] = useState(true);
+  const [isGettingUser, setIsGettingUser] = useState(true);
 
-  const [stepForm, setStepForm] = useState<StepForm>(StepForm.TRIP_DETAILS);
-  const [selectedDates, setSelectedDates] = useState({} as DatesSelected);
-  const [destination, setDestination] = useState("");
-  const [emailToInvite, setEmailToInvite] = useState("");
-  const [emailsToInvite, setEmailsToInvite] = useState<string[]>([]);
+  const [stepForm, setStepForm] = useState<StepForm>(StepForm.LOGIN);
 
-  // Modal
-  const [showModal, setShowModal] = useState(MODAL.NONE);
+  // ZOD
+  const {
+    control,
+    reset,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(
+      stepForm === StepForm.LOGIN ? loginSchema : registerSchema
+    ),
+    defaultValues: {
+      email: "gahalberto@icloud.com",
+      password: "qwerty",
+      name: "Gabriel Alberto",
+      phone: "11994917885",
+      confirmPassword: "qwerty",
+    },
+  });
 
-  function handleNextStepForm() {
-    if (
-      destination.trim().length === 0 ||
-      !selectedDates.startsAt ||
-      !selectedDates.endsAt
-    ) {
-      return Alert.alert(
-        "Detalhes da viagem!",
-        "Preencha todas as informações da viagem para continuar."
-      );
-    }
-
-    if (destination.length < 4) {
-      return Alert.alert(
-        "Detalhes da viagem!",
-        "O destino deve ter no mínimo 4 caracteres."
-      );
-    }
-    if (stepForm === StepForm.TRIP_DETAILS) {
-      return setStepForm(StepForm.ADD_EMAIL);
-    }
-
-    Alert.alert("Nova viagem", "Deseja confirmar a viagem?", [
-      {
-        text: "Não",
-        style: "cancel",
-      },
-      {
-        text: "Sim",
-        onPress: () => createTrip(),
-      },
-    ]);
-  }
-
-  function handleSelectDate(selectedDay: DateData) {
-    const dates = calendarUtils.orderStartsAtAndEndsAt({
-      startsAt: selectedDates.startsAt,
-      endsAt: selectedDates.endsAt,
-      selectedDay,
-    });
-
-    setSelectedDates(dates);
-  }
-
-  function handleAddEmail() {
-    if (!validateInput.email(emailToInvite)) {
-      return Alert.alert("Convidado", "E-mail inválido.");
-    }
-
-    const emailsAlreadyExists = emailsToInvite.find(
-      (email) => email === emailToInvite
-    );
-    if (emailsAlreadyExists) {
-      return Alert.alert("Convidado", "E-mail já adicionado.");
-    }
-
-    setEmailsToInvite((prevState) => [...prevState, emailToInvite]);
-    setEmailToInvite("");
-  }
-
-  async function saveTrip(tripId: string) {
+  async function handleLoginPage(formData: any) {
     try {
-      await tripStorage.save(tripId);
-      router.navigate(`/trip/${tripId}`);
+      setIsLoadingLogin(true);
+      const response = await authServer.Login(
+        formData.email,
+        formData.password
+      );
+      if (response) {
+        // Salva no AsyncStorage e atualiza o contexto
+        await saveUser(
+          response.id,
+          response.name,
+          response.email,
+          response.token
+        );
+        login({
+          id: response.id,
+          name: response.name,
+          email: response.email,
+        });
+        Alert.alert("Sucesso", "Login realizado com sucesso!");
+        router.navigate(`/mashguiach`);
+      }
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível salvar a viagem.");
+      setIsLoadingLogin(false);
+      console.log(error);
+      Alert.alert("Erro", "Não foi possível fazer login.");
+    } finally {
+      setIsLoadingLogin(false);
+    }
+  }
+
+  async function onSubmitRegisterOne(formData: any) {
+    try {
+      setIsLoadingRegister(true);
+      const newUser = await authServer.Register({
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email.toLowerCase(),
+        password: formData.password,
+      });
+      console.log({ newUser });
+      if (newUser) {
+        Alert.alert("Nova conta criada", "Nova conta cadastrada com sucesso!");
+        await saveUser(newUser.id, newUser.name, newUser.email, newUser.token);
+      }
+      router.navigate(`/mashguiach`);
+    } catch (error: any) {
+      setIsLoadingRegister(false);
+      console.log(error.response);
+      if (error.response) {
+        const errorMessage =
+          error.response.data.message || "Não foi possível fazer o registro.";
+        Alert.alert("Erro", errorMessage);
+      } else {
+        Alert.alert("Erro", "Erro inesperado, teste novamente mais tarde.");
+      }
+    } finally {
+      setIsLoadingRegister(false);
+    }
+  }
+
+  async function saveUser(
+    id: string,
+    name: string,
+    email: string,
+    token: string
+  ) {
+    try {
+      const user = { id, name, email };
+      await userStorage.save({ id, name, email, token });
+      login(user); // Atualiza o contexto com o novo usuário
+    } catch (error) {
+      Alert.alert("Erro", "Não foi possível salvar o usuário.");
       console.log(error);
       throw error;
     }
   }
 
-  async function createTrip() {
+  async function getUser() {
     try {
-      setIsCreatingTrip(true);
-
-      const newTrip = await tripServer.create({
-        destination,
-        starts_at: dayjs(selectedDates.startsAt?.dateString).toString(),
-        ends_at: dayjs(selectedDates.endsAt?.dateString).toString(),
-        emails_to_invite: emailsToInvite,
-      });
-
-      Alert.alert("Nova viagem", "Sua viagem foi criada com sucesso!", [
-        {
-          text: "Continuar",
-          onPress: () => saveTrip(newTrip.tripId),
-        },
-      ]);
-    } catch (error) {
-      console.log(error);
-      Alert.alert("Erro", "Não foi possível criar a viagem.");
-    }
-  }
-
-  async function getTrip() {
-    try {
-      const tripId = await tripStorage.get();
-      if (!tripId) {
-        return setIsGettingTrip(false);
+      const userId = await userStorage.get();
+      if (!userId) {
+        return setIsGettingUser(false);
       }
 
-      const trip = await tripServer.getById(tripId);
+      // const trip = await tripServer.getById(userId);
 
-      if (trip) {
-        router.navigate(`/trip/${trip.id}`);
+      if (userId) {
+        router.navigate(`/mashguiach`);
       }
     } catch (error) {
-      setIsGettingTrip(false);
+      setIsGettingUser(false);
       console.log(error);
     }
   }
 
   useEffect(() => {
-    getTrip();
+    reset(); // Reseta os valores ao trocar de formulário
+  }, [stepForm]);
+
+  useEffect(() => {
+    getUser();
   }, []);
 
-  if (isGettingTrip) {
+  if (isGettingUser) {
     return <Loading />;
   }
 
@@ -173,147 +215,236 @@ export default function Index() {
     <View className="flex-1 items-center justify-center px-5">
       <Image
         source={require("../assets/logo.png")}
-        className="h-8"
+        className="h-16"
         resizeMode="contain"
       />
 
       <Image source={require("../assets/bg.png")} className="absolute" />
 
       <Text className="text-zinc-400 font-regular text-center text-lg mt-3">
-        Convide seus amigos e planeje sua{"\n"} próxima viagem
+        Faça login no BYK APP{"\n"} Dep. de Kashrut
       </Text>
 
-      <View className="w-full bg-zinc-900 rounded-xl p-4 my-8 border border-zinc-800">
-        <Input>
-          <MapPin color={colors.zinc[400]} size={20} />
-          <Input.Field
-            placeholder="Para onde?"
-            editable={stepForm === StepForm.TRIP_DETAILS}
-            onChangeText={setDestination}
-            value={destination}
-          />
-          <IconCalendar color={colors.zinc[400]} size={20} />
-          <Input.Field
-            placeholder="Quando?"
-            editable={stepForm === StepForm.TRIP_DETAILS}
-            onFocus={() => Keyboard.dismiss()}
-            showSoftInputOnFocus={false}
-            onPressIn={() =>
-              stepForm === StepForm.TRIP_DETAILS && setShowModal(MODAL.CALENDAR)
-            }
-            value={selectedDates.formatDatesInText}
-          />
-        </Input>
-        {stepForm === StepForm.ADD_EMAIL && (
-          <>
-            <View className="border-b py-3 border-zinc-800">
-              <Button
-                variant="secondary"
-                onPress={() => setStepForm(StepForm.TRIP_DETAILS)}
-              >
-                <Button.Title>Alterar local/data</Button.Title>
-                <Settings2 color={colors.zinc[200]} size={20} />
-              </Button>
-            </View>
-            <Input>
-              <UserRoundPlus color={colors.zinc[400]} size={20} />
-              <Input.Field
-                placeholder="Quem estará na viagem?"
-                autoCorrect={false}
-                value={
-                  emailsToInvite.length > 0
-                    ? `${emailsToInvite.length} convidada(s)`
-                    : ""
-                }
-                onPress={() => {
-                  Keyboard.dismiss();
-                  setShowModal(MODAL.GUESTS);
-                }}
-                showSoftInputOnFocus={false}
-              />
-            </Input>
-          </>
-        )}
-        <Button onPress={handleNextStepForm} isLoading={false}>
-          <Button.Title>
-            {stepForm === StepForm.TRIP_DETAILS
-              ? "Continuar"
-              : "Confirmar Viagem"}{" "}
-          </Button.Title>
-          <ArrowRight color={colors.zinc[950]} size={20} />
-        </Button>
-      </View>
+      {/* LOGIN */}
+
+      {stepForm === StepForm.LOGIN && (
+        <View className="flex-col w-full bg-bkblue-900 rounded-xl p-4 my-8 border border-zinc-800">
+          <Input>
+            <User color={colors.zinc[400]} size={20} />
+            <Controller
+              name="email"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Input.Field
+                  placeholder="E-mail?"
+                  keyboardType="email-address"
+                  editable={stepForm === StepForm.LOGIN}
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+            />
+          </Input>
+          <View>
+            {errors.email && (
+              <Text className="text-white">
+                {String(errors.email?.message)}
+              </Text>
+            )}
+          </View>
+          <Input>
+            <Lock color={colors.zinc[400]} size={20} />
+            <Controller
+              name="password" // Corrigido aqui
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Input.Field
+                  placeholder="Senha?"
+                  secureTextEntry
+                  editable={stepForm === StepForm.LOGIN}
+                  value={value}
+                  onChangeText={onChange}
+                />
+              )}
+            />
+          </Input>
+          <View>
+            {errors.password && (
+              <Text className="text-white">
+                {String(errors.password.message)}
+              </Text>
+            )}
+          </View>
+
+          <Button
+            onPress={handleSubmit(handleLoginPage)}
+            isLoading={isLoadingLogin}
+            className="mt-4"
+          >
+            <Button.Title>
+              {stepForm === StepForm.LOGIN ? "Entrar" : "Registrar-se"}{" "}
+            </Button.Title>
+            <ArrowRight color={colors.zinc[950]} size={20} />
+          </Button>
+
+          <View className="flex w-full items-center my-4">
+            <View className="w-3/4 h-px bg-gray-300" />
+          </View>
+
+          <Button
+            variant="tertiary"
+            onPress={() => setStepForm(StepForm.REGISTER)}
+            isLoading={false}
+          >
+            <Button.Title>
+              {stepForm === StepForm.LOGIN
+                ? "Nova conta?"
+                : "Já tem uma conta?"}{" "}
+            </Button.Title>
+            <ArrowRight color={colors.zinc[950]} size={20} />
+          </Button>
+        </View>
+      )}
+
+      {/* REGISTER */}
+      {stepForm === StepForm.REGISTER && (
+        <View className="flex-col w-full bg-bkblue-900 rounded-xl p-4 my-8 border border-zinc-800">
+          <Input>
+            <User color={colors.zinc[400]} size={20} />
+            <Controller
+              name="name"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Input.Field
+                  placeholder="Digite seu nome completo"
+                  onChangeText={onChange}
+                  value={value}
+                  returnKeyType="next"
+                />
+              )}
+            />
+          </Input>
+          {errors.name && (
+            <Text className="text-white">{String(errors.name.message)}</Text>
+          )}
+
+          <Input>
+            <User color={colors.zinc[400]} size={20} />
+            <Controller
+              name="phone"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Input.Field
+                  keyboardType="phone-pad" // Abre teclado numérico com símbolos
+                  placeholder="Telefone com DDD"
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+            />
+          </Input>
+          {errors.phone && (
+            <Text className="text-white">{String(errors.phone.message)}</Text>
+          )}
+
+          <Input>
+            <User color={colors.zinc[400]} size={20} />
+            <Controller
+              name="email"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Input.Field
+                  placeholder="Digite seu melhor e-mail"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+            />
+          </Input>
+          {errors.email && (
+            <Text className="text-white">{String(errors.email.message)}</Text>
+          )}
+
+          <Input>
+            <Lock color={colors.zinc[400]} size={20} />
+            <Controller
+              name="password"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Input.Field
+                  placeholder="Digite uma senha"
+                  autoCapitalize="none"
+                  secureTextEntry
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+            />
+          </Input>
+          {errors.password && (
+            <Text className="text-white">
+              {String(errors.password.message)}
+            </Text>
+          )}
+
+          <Input>
+            <Lock color={colors.zinc[400]} size={20} />
+            <Controller
+              name="confirmPassword"
+              control={control}
+              render={({ field: { onChange, value } }) => (
+                <Input.Field
+                  placeholder="Confirme a senha"
+                  autoCapitalize="none"
+                  secureTextEntry
+                  onChangeText={onChange}
+                  value={value}
+                />
+              )}
+            />
+          </Input>
+          {errors.confirmPassword && (
+            <Text className="text-white">
+              {String(errors.confirmPassword.message)}
+            </Text>
+          )}
+
+          <Button
+            className="mt-8"
+            onPress={handleSubmit(onSubmitRegisterOne)}
+            isLoading={isLoadingRegister}
+          >
+            <Button.Title>Criar uma nova conta</Button.Title>
+            <ArrowRight color={colors.zinc[950]} size={20} />
+          </Button>
+
+          <View className="flex w-full items-center my-4">
+            <View className="w-3/4 h-px bg-gray-300" />
+          </View>
+
+          <Button
+            variant="tertiary"
+            onPress={() => setStepForm(StepForm.LOGIN)} // Valida antes de avançar
+            isLoading={false}
+          >
+            <Button.Title>Já tem uma conta?</Button.Title>
+            <ArrowRight color={colors.zinc[950]} size={20} />
+          </Button>
+        </View>
+      )}
 
       <Text className="text-zinc-500 font-regular text-center text-base">
-        Ao planejar a sua viagem pela{" "}
-        <Text className="text-lime-300">plann.er</Text> você automaticamente
-        concorda com os nossos{" "}
+        Ao fazer seu login ou criar a sua conta{" "}
+        <Text className="text-bkGolden-300">MashguiachApp</Text> você
+        automaticamente concorda com os nossos{" "}
         <Text className="text-zinc-300 underline">
           termos de uso e políticas de privacidade.
         </Text>
       </Text>
 
       <Text className="text-white">Login</Text>
-
-      <Modal
-        title="Selecionar datas"
-        subtitle="Selecione a data de ida e volta de viagem"
-        visible={showModal === MODAL.CALENDAR}
-        onClose={() => setShowModal(MODAL.NONE)}
-      >
-        <View className="gap-4 mt-4">
-          <Calendar
-            minDate={dayjs().toISOString()}
-            onDayPress={handleSelectDate}
-            markedDates={selectedDates.dates}
-          />
-          <Button onPress={() => setShowModal(MODAL.NONE)}>
-            <Button.Title>Confirmar</Button.Title>
-          </Button>
-        </View>
-      </Modal>
-
-      <Modal
-        title="Selecionar convidados"
-        subtitle="Os convidados irão receber e-mails para confirmar a participação na viagem"
-        visible={showModal === MODAL.GUESTS}
-        onClose={() => setShowModal(MODAL.NONE)}
-      >
-        <View className="my-2 flex-wrap gap-2 border-b border-zinc-800 py-5 items-start">
-          {emailsToInvite.length > 0 ? (
-            emailsToInvite.map((email) => (
-              <GuestEmail
-                key={email}
-                email={email}
-                onRemove={() =>
-                  setEmailsToInvite(emailsToInvite.filter((e) => e !== email))
-                }
-              />
-            ))
-          ) : (
-            <Text className="text-zinc-600 text-base font-regular text-center">
-              Nenhum e-mail adicionado
-            </Text>
-          )}
-        </View>
-        <View className="gap-4 mt-4">
-          <Input variant="secondary">
-            <AtSign color={colors.zinc[400]} size={20} />
-            <Input.Field
-              placeholder="Digite o e-mail do convidado"
-              keyboardType="email-address"
-              onChangeText={(text) => setEmailToInvite(text.toLowerCase())}
-              value={emailToInvite}
-              returnKeyType="send"
-              onSubmitEditing={handleAddEmail}
-            />
-          </Input>
-
-          <Button onPress={handleAddEmail}>
-            <Button.Title>Convidar</Button.Title>
-          </Button>
-        </View>
-      </Modal>
     </View>
   );
 }

@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import clsx from "clsx";
 
-type Variants = "primary" | "secondary";
+type Variants = "primary" | "secondary" | "tertiary";
 
 type ButtonProps = TouchableOpacityProps & {
   variant?: Variants;
@@ -30,8 +30,9 @@ function Button({
       className={clsx(
         "h-11 flex-row items-center justify-center rounded-lg gap-2 px-2",
         {
-          "bg-lime-300": variant === "primary",
+          "bg-bkGolden-300": variant === "primary",
           "bg-zinc-800": variant === "secondary",
+          "bg-gray-400": variant === "tertiary",
         },
         className
       )}
