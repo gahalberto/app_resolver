@@ -7,6 +7,7 @@ export default function ReportsPage() {
       <Header title="Relatórios" />
       <View className="flex-1 items-center justify-center">
         <Text className="text-white text-xl">Relatórios</Text>
+        <Text className="text-zinc-400 mt-2">Nenhum relatório disponível</Text>
       </View>
     </SafeAreaView>
   );

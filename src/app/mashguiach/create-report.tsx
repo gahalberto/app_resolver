@@ -7,6 +7,7 @@ export default function CreateReportPage() {
       <Header title="Criar Relatório" />
       <View className="flex-1 items-center justify-center">
         <Text className="text-white text-xl">Criar Relatório</Text>
+        <Text className="text-zinc-400 mt-2">Formulário para criação de relatórios</Text>
       </View>
     </SafeAreaView>
   );

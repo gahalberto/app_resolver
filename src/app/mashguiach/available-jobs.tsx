@@ -7,6 +7,7 @@ export default function AvailableJobsPage() {
       <Header title="Freelas Disponíveis" />
       <View className="flex-1 items-center justify-center">
         <Text className="text-white text-xl">Freelas Disponíveis</Text>
+        <Text className="text-zinc-400 mt-2">Nenhum freela disponível no momento</Text>
       </View>
     </SafeAreaView>
   );
