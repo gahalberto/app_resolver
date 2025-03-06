@@ -43,7 +43,7 @@ export default function TabsLayout() {
             <Timer size={size} color={color} />
           ),
           tabBarLabel: ({ color }) => (
-            <Text style={{ color, fontSize: 12 }}>Ponto</Text>
+            <Text style={{ color, fontSize: 12 }}>Fixo</Text>
           ),
         }}
       />
@@ -55,7 +55,7 @@ export default function TabsLayout() {
             <Timer size={size} color={color} />
           ),
           tabBarLabel: ({ color }) => (
-            <Text style={{ color, fontSize: 12 }}>Ponto Freelance</Text>
+            <Text style={{ color, fontSize: 12 }}>apFreelance</Text>
           ),
         }}
       />

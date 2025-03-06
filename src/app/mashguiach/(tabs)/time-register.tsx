@@ -318,7 +318,7 @@ export default function TimeRegisterPage() {
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
         <View className="items-center mb-8">
           <Text className="text-white text-xl mb-2">Olá, {user.name}</Text>
-          <Text className="text-zinc-400 text-center">Registre seu ponto diário aqui</Text>
+          <Text className="text-zinc-400 text-center">Registre seu check-in e check-out diário aqui</Text>
           
           {/* Botão de atualização manual */}
           <TouchableOpacity 
@@ -638,7 +638,7 @@ export default function TimeRegisterPage() {
           </Text>
         </TouchableOpacity>
         
-        <TouchableOpacity
+        {/* <TouchableOpacity
           className={`flex-1 py-3 ${activeTab === 'report' ? 'border-b-2 border-bkGolden-300' : ''}`}
           onPress={() => setActiveTab('report')}
         >
@@ -649,7 +649,7 @@ export default function TimeRegisterPage() {
           >
             Relatório
           </Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
       
       {activeTab === 'register' ? renderRegisterTab() : renderReportTab()}

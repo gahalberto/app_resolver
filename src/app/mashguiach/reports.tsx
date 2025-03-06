@@ -337,7 +337,7 @@ export default function ReportsPage() {
         <View style={styles.infoRow}>
           <Clock size={16} color={item.reallyMashguiachArrive ? '#10B981' : '#F59E0B'} />
           <Text style={[styles.infoText, { color: currentTheme.text }]}>
-            <Text style={{ color: currentTheme.textSecondary }}>Ponto: </Text>
+            <Text style={{ color: currentTheme.textSecondary }}>Check-in: </Text>
             {item.reallyMashguiachArrive 
               ? formatTime(item.reallyMashguiachArrive)
               : 'Não registrado'} 
@@ -819,7 +819,7 @@ export default function ReportsPage() {
                     
                     <View style={styles.timeCard}>
                       <Text style={[styles.timeCardTitle, { color: currentTheme.text }]}>
-                        Registro de Ponto
+                        Check-in e Check-out
                       </Text>
                       
                       {/* Chegada */}
