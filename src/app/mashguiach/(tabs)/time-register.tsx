@@ -45,9 +45,8 @@ interface TimeEntryReport {
 export default function TimeRegisterPage() {
   const { user, isLoading } = useUser();
   const [isRegistering, setIsRegistering] = useState(false);
-  const [hasEntryToday, setHasEntryToday] = useState(false);
-  const [hasExitToday, setHasExitToday] = useState(false);
   const [isCheckingStatus, setIsCheckingStatus] = useState(true);
+  const [timeEntryStatus, setTimeEntryStatus] = useState<any>(null);
   
   // Estados para o relatório
   const [activeTab, setActiveTab] = useState<'register' | 'report'>('register');
@@ -59,7 +58,9 @@ export default function TimeRegisterPage() {
   const [showYearPicker, setShowYearPicker] = useState(false);
 
   useEffect(() => {
-    checkUserStatus();
+    if (user?.id) {
+      checkUserStatus();
+    }
   }, [user]);
 
   useEffect(() => {
@@ -73,26 +74,20 @@ export default function TimeRegisterPage() {
 
     try {
       setIsCheckingStatus(true);
+      console.log('Verificando status do usuário:', user.id);
       
-      // Verificar se o usuário já registrou entrada hoje
-      const entryResponse = await api.get('/time-entries', {
+      // Adicionar timestamp para evitar cache (304 Not Modified)
+      const timestamp = new Date().getTime();
+      
+      const response = await api.get('/time-entries', {
         params: { 
           userId: user.id,
-          type: 'ENTRADA',
-          action: 'check-entrance',
+          _t: timestamp // Parâmetro para evitar cache
         }
       });
-      setHasEntryToday(!!entryResponse.data);
-
-      // Verificar se o usuário já registrou saída hoje
-      const exitResponse = await api.get('/time-entries', {
-        params: { 
-          userId: user.id,
-          type: 'SAIDA',
-          action: 'check-exit',
-        }
-      });
-      setHasExitToday(!!exitResponse.data);
+      
+      console.log('Resposta do status do usuário:', response.data);
+      setTimeEntryStatus(response.data);
     } catch (error) {
       console.error('Erro ao verificar status:', error);
     } finally {
@@ -105,6 +100,7 @@ export default function TimeRegisterPage() {
     
     try {
       setIsRegistering(true);
+      console.log('Registrando entrada para trabalho fixo');
       
       // Solicitar permissão de localização
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -117,16 +113,23 @@ export default function TimeRegisterPage() {
       // Obter localização atual
       const location = await Location.getCurrentPositionAsync({});
       const { latitude, longitude } = location.coords;
+      console.log('Localização obtida:', { latitude, longitude });
       
-      // Registrar entrada com o formato correto
-      await api.post('/time-entries', {
+      // Adicionar timestamp para evitar cache (304 Not Modified)
+      const timestamp = new Date().getTime();
+      
+      // Registrar entrada
+      const response = await api.post('/time-entries', {
         userId: user.id,
         type: "ENTRADA",
         latitude,
-        longitude
+        longitude,
+        _t: timestamp // Parâmetro para evitar cache
       });
       
-      setHasEntryToday(true);
+      console.log('Resposta do registro de entrada:', response.data);
+      
+      await checkUserStatus();
       Alert.alert('Sucesso', 'Entrada registrada com sucesso!');
     } catch (error) {
       console.error('Erro ao registrar entrada:', error);
@@ -141,32 +144,81 @@ export default function TimeRegisterPage() {
     
     try {
       setIsRegistering(true);
+      console.log('Registrando saída para trabalho fixo');
       
-      // Solicitar permissão de localização
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permissão negada', 'Precisamos da sua localização para registrar o ponto.');
-        setIsRegistering(false);
-        return;
-      }
+      // Adicionar timestamp para evitar cache (304 Not Modified)
+      const timestamp = new Date().getTime();
       
-      // Obter localização atual
-      const location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-      
-      // Registrar saída com o formato correto
-      await api.post('/time-entries', {
+      // Registrar saída
+      const response = await api.post('/time-entries', {
         userId: user.id,
         type: "SAIDA",
-        latitude,
-        longitude
+        _t: timestamp // Parâmetro para evitar cache
       });
       
-      setHasExitToday(true);
+      console.log('Resposta do registro de saída:', response.data);
+      
+      await checkUserStatus();
       Alert.alert('Sucesso', 'Saída registrada com sucesso!');
     } catch (error) {
       console.error('Erro ao registrar saída:', error);
       Alert.alert('Erro', 'Não foi possível registrar sua saída. Tente novamente.');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleRegisterLunchEntry = async () => {
+    if (!user) return;
+    
+    try {
+      setIsRegistering(true);
+      console.log('Registrando entrada do almoço');
+      
+      // Adicionar timestamp para evitar cache (304 Not Modified)
+      const timestamp = new Date().getTime();
+      
+      const response = await api.post('/time-entries', {
+        userId: user.id,
+        type: "ALMOCO_ENTRADA",
+        _t: timestamp // Parâmetro para evitar cache
+      });
+      
+      console.log('Resposta do registro de entrada do almoço:', response.data);
+      
+      await checkUserStatus();
+      Alert.alert('Sucesso', 'Entrada do almoço registrada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao registrar entrada do almoço:', error);
+      Alert.alert('Erro', 'Não foi possível registrar sua entrada do almoço. Tente novamente.');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleRegisterLunchExit = async () => {
+    if (!user) return;
+    
+    try {
+      setIsRegistering(true);
+      console.log('Registrando saída do almoço');
+      
+      // Adicionar timestamp para evitar cache (304 Not Modified)
+      const timestamp = new Date().getTime();
+      
+      const response = await api.post('/time-entries', {
+        userId: user.id,
+        type: "ALMOCO_SAIDA",
+        _t: timestamp // Parâmetro para evitar cache
+      });
+      
+      console.log('Resposta do registro de saída do almoço:', response.data);
+      
+      await checkUserStatus();
+      Alert.alert('Sucesso', 'Saída do almoço registrada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao registrar saída do almoço:', error);
+      Alert.alert('Erro', 'Não foi possível registrar sua saída do almoço. Tente novamente.');
     } finally {
       setIsRegistering(false);
     }
@@ -177,15 +229,25 @@ export default function TimeRegisterPage() {
     
     try {
       setIsLoadingReport(true);
+      console.log('Buscando relatório de ponto para:', {
+        user_id: user.id,
+        month: selectedMonth,
+        year: selectedYear
+      });
+      
+      // Adicionar timestamp para evitar cache (304 Not Modified)
+      const timestamp = new Date().getTime();
       
       const response = await api.get('/time-entries/report', {
         params: {
-          userId: user.id,
+          user_id: user.id,
           month: selectedMonth,
-          year: selectedYear
+          year: selectedYear,
+          _t: timestamp // Parâmetro para evitar cache
         }
       });
       
+      console.log('Resposta do relatório:', JSON.stringify(response.data, null, 2));
       setReportData(response.data);
     } catch (error) {
       console.error('Erro ao buscar relatório:', error);
@@ -222,33 +284,57 @@ export default function TimeRegisterPage() {
 
   const renderRegisterTab = () => {
     if (isLoading || isCheckingStatus) {
+      console.log('Renderizando estado de carregamento');
       return (
-        <View className="flex-1 items-center justify-center">
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ActivityIndicator size="large" color={colors.bkGolden[300]} />
         </View>
       );
     }
 
     if (!user) {
+      console.log('Renderizando estado de não logado');
       return (
-        <View className="flex-1 items-center justify-center p-4">
-          <Text className="text-white text-lg text-center">
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16 }}>
+          <Text style={{ color: 'white', fontSize: 18, textAlign: 'center' }}>
             Você precisa estar logado para registrar seu ponto.
           </Text>
         </View>
       );
     }
 
+    // Obter status do usuário
+    let hasOpenEntry = false;
+    let isOnLunch = false;
+    
+    if (timeEntryStatus && timeEntryStatus.status) {
+      hasOpenEntry = timeEntryStatus.status.hasOpenEntry || false;
+      isOnLunch = timeEntryStatus.status.isOnLunch || false;
+    }
+    
+    console.log('Status do registro de ponto:', { hasOpenEntry, isOnLunch });
+
     return (
-      <View className="flex-1 p-4">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
         <View className="items-center mb-8">
           <Text className="text-white text-xl mb-2">Olá, {user.name}</Text>
-          <Text className="text-zinc-400 text-center">
-            Registre sua entrada e saída diária aqui.
-          </Text>
+          <Text className="text-zinc-400 text-center">Registre seu ponto diário aqui</Text>
+          
+          {/* Botão de atualização manual */}
+          <TouchableOpacity 
+            className="bg-bkGolden-300 py-2 px-4 rounded mt-4 flex-row items-center"
+            onPress={checkUserStatus}
+            disabled={isCheckingStatus}
+          >
+            {isCheckingStatus ? (
+              <ActivityIndicator size="small" color="#232c59" />
+            ) : (
+              <Text className="text-bkblue-900 font-medium">Atualizar Status</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
-        <View className="bg-bkblue-700 rounded-lg p-6 mb-6">
+        <View className="bg-bkblue-800 rounded-lg p-4 mb-4">
           <Text className="text-white text-lg font-medium mb-4 text-center">
             {new Date().toLocaleDateString('pt-BR', { 
               weekday: 'long', 
@@ -258,94 +344,86 @@ export default function TimeRegisterPage() {
             })}
           </Text>
 
-          <View className="flex-row justify-around mb-6">
-            <View className="items-center">
-              <Clock size={24} color={colors.zinc[400]} />
-              <Text className="text-zinc-400 mt-1">
-                {new Date().toLocaleTimeString('pt-BR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </Text>
-            </View>
-          </View>
+          <TouchableOpacity 
+            className={`flex-row items-center justify-center bg-bkGolden-300 p-3 rounded-md mb-3 ${hasOpenEntry ? 'opacity-50' : ''}`}
+            onPress={handleRegisterEntry}
+            disabled={isRegistering || hasOpenEntry}
+          >
+            {isRegistering ? (
+              <ActivityIndicator size="small" color="#232c59" />
+            ) : (
+              <>
+                <LogIn size={20} color="#232c59" />
+                <Text className="text-bkblue-900 font-medium ml-2">
+                  {hasOpenEntry ? 'Entrada Registrada' : 'Registrar Entrada'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-          <View className="space-y-4">
-            <TouchableOpacity
-              className={`py-3 px-4 rounded-md flex-row items-center justify-center ${
-                hasEntryToday 
-                  ? 'bg-bkblue-600' 
-                  : 'bg-bkGolden-300'
-              }`}
-              onPress={handleRegisterEntry}
-              disabled={isRegistering || hasEntryToday}
-            >
-              {isRegistering ? (
-                <ActivityIndicator size="small" color={hasEntryToday ? colors.zinc[400] : colors.bkblue[900]} />
-              ) : (
-                <>
-                  <LogIn size={20} color={hasEntryToday ? colors.zinc[400] : colors.bkblue[900]} />
-                  <Text 
-                    className={`ml-2 font-medium ${
-                      hasEntryToday 
-                        ? 'text-zinc-400' 
-                        : 'text-bkblue-900'
-                    }`}
-                  >
-                    {hasEntryToday ? 'Entrada Registrada' : 'Registrar Entrada'}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
+          <TouchableOpacity 
+            className={`flex-row items-center justify-center bg-bkGolden-300 p-3 rounded-md mb-3 ${!hasOpenEntry || isOnLunch ? 'opacity-50' : ''}`}
+            onPress={handleRegisterLunchEntry}
+            disabled={isRegistering || !hasOpenEntry || isOnLunch}
+          >
+            {isRegistering ? (
+              <ActivityIndicator size="small" color="#232c59" />
+            ) : (
+              <>
+                <Clock size={20} color="#232c59" />
+                <Text className="text-bkblue-900 font-medium ml-2">
+                  {!hasOpenEntry 
+                    ? 'Registre a entrada primeiro' 
+                    : isOnLunch 
+                      ? 'Almoço em andamento' 
+                      : 'Registrar Entrada do Almoço'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              className={`py-3 px-4 rounded-md flex-row items-center justify-center ${
-                !hasEntryToday 
-                  ? 'bg-bkblue-600' 
-                  : hasExitToday 
-                    ? 'bg-bkblue-600' 
-                    : 'bg-bkGolden-300'
-              }`}
-              onPress={handleRegisterExit}
-              disabled={isRegistering || !hasEntryToday || hasExitToday}
-            >
-              {isRegistering ? (
-                <ActivityIndicator 
-                  size="small" 
-                  color={!hasEntryToday || hasExitToday ? colors.zinc[400] : colors.bkblue[900]} 
-                />
-              ) : (
-                <>
-                  <LogOut 
-                    size={20} 
-                    color={!hasEntryToday || hasExitToday ? colors.zinc[400] : colors.bkblue[900]} 
-                  />
-                  <Text 
-                    className={`ml-2 font-medium ${
-                      !hasEntryToday || hasExitToday 
-                        ? 'text-zinc-400' 
-                        : 'text-bkblue-900'
-                    }`}
-                  >
-                    {!hasEntryToday 
-                      ? 'Registre a entrada primeiro' 
-                      : hasExitToday 
-                        ? 'Saída Registrada' 
-                        : 'Registrar Saída'}
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            className={`flex-row items-center justify-center bg-bkGolden-300 p-3 rounded-md mb-3 ${!isOnLunch ? 'opacity-50' : ''}`}
+            onPress={handleRegisterLunchExit}
+            disabled={isRegistering || !isOnLunch}
+          >
+            {isRegistering ? (
+              <ActivityIndicator size="small" color="#232c59" />
+            ) : (
+              <>
+                <Clock size={20} color="#232c59" />
+                <Text className="text-bkblue-900 font-medium ml-2">
+                  {!isOnLunch ? 'Não está em horário de almoço' : 'Registrar Saída do Almoço'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            className={`flex-row items-center justify-center bg-bkGolden-300 p-3 rounded-md ${!hasOpenEntry ? 'opacity-50' : ''}`}
+            onPress={handleRegisterExit}
+            disabled={isRegistering || !hasOpenEntry}
+          >
+            {isRegistering ? (
+              <ActivityIndicator size="small" color="#232c59" />
+            ) : (
+              <>
+                <LogOut size={20} color="#232c59" />
+                <Text className="text-bkblue-900 font-medium ml-2">
+                  {!hasOpenEntry ? 'Registre a entrada primeiro' : 'Registrar Saída'}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
 
-        <View className="bg-bkblue-700 rounded-lg p-4">
-          <Text className="text-white font-medium mb-2">Dicas:</Text>
-          <Text className="text-zinc-400 mb-1">• Registre sua entrada ao chegar ao trabalho</Text>
-          <Text className="text-zinc-400 mb-1">• Registre sua saída ao terminar o expediente</Text>
+        <View className="bg-bkblue-800 rounded-lg p-4">
+          <Text className="text-white text-lg font-medium mb-2">Informações</Text>
+          <Text className="text-zinc-400">• Registre sua entrada ao chegar ao trabalho</Text>
+          <Text className="text-zinc-400">• Registre sua saída ao terminar o expediente</Text>
           <Text className="text-zinc-400">• Verifique seu relatório mensal na aba Relatório</Text>
         </View>
-      </View>
+      </ScrollView>
     );
   };
 

@@ -48,6 +48,18 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="time-register-fix"
+        options={{
+          title: "Ponto Freelance",
+          tabBarIcon: ({ color, size }) => (
+            <Timer size={size} color={color} />
+          ),
+          tabBarLabel: ({ color }) => (
+            <Text style={{ color, fontSize: 12 }}>Ponto Freelance</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Perfil",

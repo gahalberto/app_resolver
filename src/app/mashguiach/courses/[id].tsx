@@ -6,12 +6,15 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   Image,
-  Alert
+  Alert,
+  SafeAreaView
 } from "react-native";
-import { PageLayout } from "@/components/PageLayout";
+import { Header } from "@/components/Header";
 import { api } from "@/server/api";
 import { colors } from "@/styles/colors";
 import { useUser } from "@/contexts/UserContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { themes } from "@/styles/themes";
 import { useLocalSearchParams, router } from "expo-router";
 import { 
   Clock, 
@@ -50,6 +53,8 @@ interface Course {
 export default function CourseDetailsPage() {
   const { id } = useLocalSearchParams();
   const { user } = useUser();
+  const { theme } = useTheme();
+  const currentTheme = themes[theme];
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
@@ -260,17 +265,19 @@ export default function CourseDetailsPage() {
 
   if (loading) {
     return (
-      <PageLayout title="Detalhes do Curso">
+      <SafeAreaView style={{ flex: 1, backgroundColor: currentTheme.background }}>
+        <Header title="Detalhes do Curso" />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.bkGolden[300]} />
         </View>
-      </PageLayout>
+      </SafeAreaView>
     );
   }
 
   if (!course) {
     return (
-      <PageLayout title="Detalhes do Curso">
+      <SafeAreaView style={{ flex: 1, backgroundColor: currentTheme.background }}>
+        <Header title="Detalhes do Curso" />
         <View className="flex-1 items-center justify-center">
           <Text className="text-white text-lg mb-4">Curso não encontrado</Text>
           <TouchableOpacity 
@@ -280,7 +287,7 @@ export default function CourseDetailsPage() {
             <Text className="text-bkblue-900 font-medium">Voltar</Text>
           </TouchableOpacity>
         </View>
-      </PageLayout>
+      </SafeAreaView>
     );
   }
 
@@ -309,7 +316,8 @@ export default function CourseDetailsPage() {
   };
 
   return (
-    <PageLayout title="Detalhes do Curso">
+    <SafeAreaView style={{ flex: 1, backgroundColor: currentTheme.background }}>
+      <Header title="Detalhes do Curso" />
       <ScrollView className="flex-1">
         {/* Imagem do curso */}
         <View className="w-full h-48 bg-bkblue-600">
@@ -465,6 +473,6 @@ export default function CourseDetailsPage() {
           )}
         </View>
       </ScrollView>
-    </PageLayout>
+    </SafeAreaView>
   );
 } 

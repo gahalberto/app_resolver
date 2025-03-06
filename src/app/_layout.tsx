@@ -15,8 +15,38 @@ import {
 } from "@expo-google-fonts/inter";
 import { Loading } from "@/components/loading";
 import { UserProvider } from "@/contexts/UserContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { themes } from "@/styles/themes";
+import PermissionsManager from "@/components/PermissionsManager";
+import * as Notifications from 'expo-notifications';
 
-export default function Layout() {
+// Configuração das notificações
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+function Layout() {
+  const { theme } = useTheme();
+  const currentTheme = themes[theme];
+
+  return (
+    <View style={{ flex: 1, backgroundColor: currentTheme.background }}>
+      <StatusBar
+        barStyle={theme === 'dark' ? "light-content" : "dark-content"}
+        backgroundColor="transparent"
+        translucent
+      />
+      <Slot />
+    </View>
+  );
+}
+
+export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -29,15 +59,12 @@ export default function Layout() {
   }
 
   return (
-    <UserProvider>
-      <View className="flex-1 bg-bkblue-800">
-        <StatusBar
-          barStyle={"light-content"}
-          backgroundColor={"transparent"}
-          translucent
-        />
-        <Slot />
-      </View>
-    </UserProvider>
+    <ThemeProvider>
+      <UserProvider>
+        <PermissionsManager>
+          <Layout />
+        </PermissionsManager>
+      </UserProvider>
+    </ThemeProvider>
   );
 }

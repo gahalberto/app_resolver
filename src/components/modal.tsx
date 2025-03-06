@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
+  SafeAreaView,
 } from "react-native";
 import { BlurView } from "expo-blur";
 
@@ -26,6 +28,9 @@ export function Modal({
   children,
   ...rest
 }: Props) {
+  const screenHeight = Dimensions.get('window').height;
+  const maxHeight = screenHeight * (2/3); // 2/3 da altura da tela
+  
   return (
     <RNModal transparent animationType="slide" {...rest}>
       <BlurView
@@ -34,39 +39,44 @@ export function Modal({
         tint="dark"
         experimentalBlurMethod="dimezisBlurView"
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
-          <View className="flex-1 justify-end bg-black/60">
-            <View className="bg-zinc-900 border-t border-zinc-700 px-6 pt-5 pb-10">
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
+        <SafeAreaView style={{ flex: 1 }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+          >
+            <View className="flex-1 justify-end bg-black/60">
+              <View 
+                className="bg-zinc-900 border-t border-zinc-700 px-6 pt-5 pb-10 rounded-t-3xl"
+                style={{ maxHeight }}
               >
-                <View className="flex-row justify-between items-center pt-5">
-                  <Text className="text-white font-medium text-xl">
-                    {title}
-                  </Text>
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <View className="flex-row justify-between items-center pt-5">
+                    <Text className="text-white font-medium text-xl">
+                      {title}
+                    </Text>
 
-                  {onClose && (
-                    <TouchableOpacity activeOpacity={0.7} onPress={onClose}>
-                      <X color={colors.zinc[400]} size={20} />
-                    </TouchableOpacity>
+                    {onClose && (
+                      <TouchableOpacity activeOpacity={0.7} onPress={onClose}>
+                        <X color={colors.zinc[400]} size={20} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {subtitle.trim().length > 0 && (
+                    <Text className="text-zinc-400 font-regular leading-6 my-2">
+                      {subtitle}
+                    </Text>
                   )}
-                </View>
 
-                {subtitle.trim().length > 0 && (
-                  <Text className="text-zinc-400 font-regular leading-6  my-2">
-                    {subtitle}
-                  </Text>
-                )}
-
-                {children}
-              </ScrollView>
+                  {children}
+                </ScrollView>
+              </View>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </BlurView>
     </RNModal>
   );

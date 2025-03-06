@@ -6,12 +6,15 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   Image,
-  RefreshControl
+  RefreshControl,
+  SafeAreaView
 } from "react-native";
-import { PageLayout } from "@/components/PageLayout";
+import { Header } from "@/components/Header";
 import { api } from "@/server/api";
 import { colors } from "@/styles/colors";
 import { useUser } from "@/contexts/UserContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { themes } from "@/styles/themes";
 import { Calendar, Clock, BookOpen, ChevronRight, Award } from "lucide-react-native";
 import { router } from "expo-router";
 
@@ -29,6 +32,8 @@ interface Course {
 
 export default function CoursesPage() {
   const { user } = useUser();
+  const { theme } = useTheme();
+  const currentTheme = themes[theme];
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -182,16 +187,18 @@ export default function CoursesPage() {
 
   if (loading && !refreshing) {
     return (
-      <PageLayout title="Cursos">
+      <SafeAreaView style={{ flex: 1, backgroundColor: currentTheme.background }}>
+        <Header title="Cursos" />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.bkGolden[300]} />
         </View>
-      </PageLayout>
+      </SafeAreaView>
     );
   }
 
   return (
-    <PageLayout title="Cursos">
+    <SafeAreaView style={{ flex: 1, backgroundColor: currentTheme.background }}>
+      <Header title="Cursos" />
       <View className="flex-1 px-4">
         {error ? (
           <View className="flex-1 items-center justify-center">
@@ -245,6 +252,6 @@ export default function CoursesPage() {
           />
         )}
       </View>
-    </PageLayout>
+    </SafeAreaView>
   );
 } 

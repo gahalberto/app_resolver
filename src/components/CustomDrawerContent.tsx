@@ -1,11 +1,12 @@
 import { useUser } from "@/contexts/UserContext";
+import { useTheme } from "@/contexts/ThemeContext";
+import { themes } from "@/styles/themes";
 import {
   DrawerContentScrollView,
   DrawerItemList,
   DrawerItem,
 } from "@react-navigation/drawer";
-import { Text, View, Image, TouchableOpacity } from "react-native";
-import { colors } from "@/styles/colors";
+import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import {
   Home,
   BookOpen,
@@ -16,16 +17,93 @@ import {
   Files,
   UserCircle,
   LogOut,
+  Sun,
+  Moon,
 } from "lucide-react-native";
 import { router } from "expo-router";
 
 export default function CustomDrawerContent(props: any) {
   const { user, logout } = useUser();
+  const { theme, toggleTheme, isDarkMode } = useTheme();
+  const currentTheme = themes[theme];
 
   const handleLogout = async () => {
     await logout();
     router.replace("/");
   };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: currentTheme.background,
+    },
+    header: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: currentTheme.surface,
+    },
+    userInfo: {
+      marginTop: 8,
+    },
+    userName: {
+      color: currentTheme.text,
+      fontSize: 18,
+      fontWeight: '600',
+    },
+    userEmail: {
+      color: currentTheme.textSecondary,
+      fontSize: 14,
+    },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 12,
+      marginHorizontal: 8,
+      marginVertical: 4,
+      borderRadius: 8,
+    },
+    menuItemActive: {
+      backgroundColor: currentTheme.surface,
+    },
+    menuItemText: {
+      marginLeft: 12,
+      color: currentTheme.text,
+      fontSize: 16,
+    },
+    menuItemTextActive: {
+      color: currentTheme.primary,
+    },
+    footer: {
+      padding: 16,
+      borderTopWidth: 1,
+      borderTopColor: currentTheme.surface,
+    },
+    themeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: currentTheme.surface,
+      borderRadius: 8,
+    },
+    themeButtonText: {
+      marginLeft: 12,
+      color: currentTheme.primary,
+      fontSize: 16,
+    },
+    logoutButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 12,
+      backgroundColor: currentTheme.error,
+      borderRadius: 8,
+    },
+    logoutText: {
+      marginLeft: 12,
+      color: '#ffffff',
+      fontSize: 16,
+    },
+  });
 
   const menuItems = [
     {
@@ -49,16 +127,6 @@ export default function CustomDrawerContent(props: any) {
       route: "/mashguiach/available-jobs",
     },
     {
-      label: "Meus Freelas",
-      icon: ClipboardList,
-      route: "/mashguiach/my-jobs",
-    },
-    {
-      label: "Criar Relatório",
-      icon: FileText,
-      route: "/mashguiach/create-report",
-    },
-    {
       label: "Relatórios",
       icon: Files,
       route: "/mashguiach/reports",
@@ -71,62 +139,65 @@ export default function CustomDrawerContent(props: any) {
   ];
 
   return (
-    <View className="flex-1">
-      {/* Cabeçalho com Logo e Informações do Usuário */}
-      <View className="px-4 pt-8 pb-6 bg-bkblue-900 border-b border-bkblue-700">
-        <View className="items-center mb-4">
-          <Image
-            source={require("@/assets/logo.png")}
-            className="w-32 h-32"
-            resizeMode="contain"
-          />
+    <View style={styles.container}>
+      <DrawerContentScrollView {...props}>
+        <View style={styles.header}>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{user?.name}</Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
+          </View>
         </View>
-        <View className="mt-2">
-          <Text className="text-white text-lg font-bold">{user?.name}</Text>
-          <Text className="text-zinc-400 text-sm">{user?.email}</Text>
-        </View>
-      </View>
 
-      <DrawerContentScrollView {...props} className="flex-1">
-        <View className="flex-1 px-2">
-          {menuItems.map((item, index) => (
+        {menuItems.map((item, index) => {
+          const isActive = props.state.index === index;
+          const Icon = item.icon;
+
+          return (
             <TouchableOpacity
               key={item.route}
-              onPress={() => router.push(item.route)}
-              className={`flex-row items-center px-4 py-3 mb-1 rounded-lg
-                ${props.state.index === index ? "bg-bkGolden-300/20" : ""}`}
+              style={[styles.menuItem, isActive && styles.menuItemActive]}
+              onPress={() => router.navigate(item.route as any)}
             >
-              <item.icon
-                size={20}
-                color={
-                  props.state.index === index
-                    ? colors.bkGolden[300]
-                    : colors.zinc[400]
-                }
+              <Icon
+                size={24}
+                color={isActive ? currentTheme.primary : currentTheme.textSecondary}
               />
               <Text
-                className={`ml-3 text-base
-                  ${
-                    props.state.index === index
-                      ? "text-bkGolden-300 font-medium"
-                      : "text-zinc-400"
-                  }`}
+                style={[
+                  styles.menuItemText,
+                  isActive && styles.menuItemTextActive,
+                ]}
               >
                 {item.label}
               </Text>
             </TouchableOpacity>
-          ))}
-        </View>
+          );
+        })}
       </DrawerContentScrollView>
 
-      {/* Botão de Logout */}
-      <TouchableOpacity
-        onPress={handleLogout}
-        className="flex-row items-center px-6 py-4 border-t border-bkblue-700"
-      >
-        <LogOut size={20} color={colors.zinc[400]} />
-        <Text className="ml-3 text-zinc-400 text-base">Sair</Text>
-      </TouchableOpacity>
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.themeButton}
+          onPress={toggleTheme}
+        >
+          {isDarkMode ? (
+            <Sun size={24} color={currentTheme.primary} />
+          ) : (
+            <Moon size={24} color={currentTheme.primary} />
+          )}
+          <Text style={styles.themeButtonText}>
+            {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <LogOut size={24} color="#ffffff" />
+          <Text style={styles.logoutText}>Sair</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
