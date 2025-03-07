@@ -29,8 +29,10 @@ import {
   Building,
   X,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Share2
 } from "lucide-react-native";
+import { FixedJobReportButton } from "@/components/FixedJobReportButton";
 
 // Interface para o Mashguiach
 interface Mashguiach {
@@ -126,6 +128,10 @@ export default function ReportsPage() {
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'pending'>('all');
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [detailsModalVisible, setDetailsModalVisible] = useState(false);
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<StoreEvents | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState("events"); // "events" ou "fixedJob"
   
   useEffect(() => {
     if (user?.id) {
@@ -388,7 +394,6 @@ export default function ReportsPage() {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      padding: 16,
     },
     header: {
       flexDirection: 'row',
@@ -503,14 +508,14 @@ export default function ReportsPage() {
     },
     emptyContainer: {
       flex: 1,
-      alignItems: 'center',
       justifyContent: 'center',
+      alignItems: 'center',
       padding: 20,
     },
     emptyText: {
+      marginTop: 10,
       fontSize: 16,
       textAlign: 'center',
-      marginBottom: 16,
     },
     paymentStatusBadge: {
       paddingHorizontal: 8,
@@ -601,122 +606,346 @@ export default function ReportsPage() {
       marginLeft: 8,
       marginTop: 2,
     },
+    tabContainer: {
+      flexDirection: 'row',
+      paddingHorizontal: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: '#e0e0e0',
+    },
+    tabButton: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+      marginRight: 8,
+    },
+    activeTab: {
+      borderBottomWidth: 2,
+    },
+    tabText: {
+      fontSize: 16,
+      color: '#666',
+    },
+    contentContainer: {
+      padding: 16,
+    },
+    section: {
+      marginBottom: 24,
+    },
+    sectionDescription: {
+      fontSize: 14,
+      marginBottom: 16,
+      lineHeight: 20,
+    },
+    infoCard: {
+      flexDirection: 'row',
+      backgroundColor: '#f9f9f9',
+      borderRadius: 8,
+      padding: 16,
+      marginTop: 16,
+      borderWidth: 1,
+      borderColor: '#e0e0e0',
+    },
+    infoCardContent: {
+      marginLeft: 12,
+      flex: 1,
+    },
+    infoCardTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      marginBottom: 8,
+    },
+    infoCardText: {
+      fontSize: 14,
+      lineHeight: 20,
+    },
+    monthButton: {
+      padding: 8,
+    },
+    content: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20,
+    },
+    loadingText: {
+      marginTop: 10,
+      fontSize: 16,
+    },
   });
   
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: currentTheme.background }}>
+    <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <Header title="Relatórios" />
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handlePreviousMonth} style={{ padding: 8 }}>
-            <ChevronLeft size={24} color={currentTheme.text} />
-          </TouchableOpacity>
-          
-          <View style={styles.monthSelector}>
-            <Calendar size={20} color={currentTheme.primary} />
-            <Text style={[styles.monthText, { color: currentTheme.text }]}>
-              {format(selectedDate, "MMMM 'de' yyyy", { locale: ptBR })}
-            </Text>
-          </View>
-          
-          <TouchableOpacity onPress={handleNextMonth} style={{ padding: 8 }}>
-            <ChevronRight size={24} color={currentTheme.text} />
-          </TouchableOpacity>
-        </View>
+      
+      {/* Tabs para alternar entre relatórios de eventos e relatórios de trabalho fixo */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[
+            styles.tabButton, 
+            activeTab === "events" && [styles.activeTab, { borderColor: currentTheme.primary }]
+          ]}
+          onPress={() => setActiveTab("events")}
+        >
+          <Text 
+            style={[
+              styles.tabText, 
+              activeTab === "events" && { color: currentTheme.primary, fontWeight: 'bold' }
+            ]}
+          >
+            Eventos
+          </Text>
+        </TouchableOpacity>
         
-        {loading ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color={currentTheme.primary} />
+        <TouchableOpacity 
+          style={[
+            styles.tabButton, 
+            activeTab === "fixedJob" && [styles.activeTab, { borderColor: currentTheme.primary }]
+          ]}
+          onPress={() => setActiveTab("fixedJob")}
+        >
+          <Text 
+            style={[
+              styles.tabText, 
+              activeTab === "fixedJob" && { color: currentTheme.primary, fontWeight: 'bold' }
+            ]}
+          >
+            Trabalho Fixo
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {activeTab === "events" ? (
+        <>
+          <View style={styles.monthSelector}>
+            <TouchableOpacity
+              onPress={handlePreviousMonth}
+              style={styles.monthButton}
+            >
+              <ChevronLeft size={24} color={currentTheme.text} />
+            </TouchableOpacity>
+            <Text style={[styles.monthText, { color: currentTheme.text }]}>
+              {format(selectedDate, "MMMM yyyy", { locale: ptBR })}
+            </Text>
+            <TouchableOpacity
+              onPress={handleNextMonth}
+              style={styles.monthButton}
+            >
+              <ChevronRight size={24} color={currentTheme.text} />
+            </TouchableOpacity>
           </View>
-        ) : (
-          <>
+
+          <ScrollView style={styles.content}>
             <View style={styles.statsContainer}>
-              <View style={[styles.statCard, { backgroundColor: currentTheme.surface }]}>
-                <Text style={[styles.statValue, { color: currentTheme.primary }]}>
+              <View
+                style={[
+                  styles.statCard,
+                  { backgroundColor: currentTheme.surfaceLight },
+                ]}
+              >
+                <Text
+                  style={[styles.statValue, { color: currentTheme.primary }]}
+                >
                   {totalEvents}
                 </Text>
-                <Text style={[styles.statLabel, { color: currentTheme.textSecondary }]}>
+                <Text
+                  style={[styles.statLabel, { color: currentTheme.text }]}
+                >
                   Eventos
                 </Text>
               </View>
-              
-              <View style={[styles.statCard, { backgroundColor: currentTheme.surface }]}>
-                <Text style={[styles.statValue, { color: currentTheme.primary }]}>
+
+              <View
+                style={[
+                  styles.statCard,
+                  { backgroundColor: currentTheme.surfaceLight },
+                ]}
+              >
+                <Text
+                  style={[styles.statValue, { color: currentTheme.primary }]}
+                >
                   {totalHours}h
                 </Text>
-                <Text style={[styles.statLabel, { color: currentTheme.textSecondary }]}>
+                <Text
+                  style={[styles.statLabel, { color: currentTheme.text }]}
+                >
                   Horas Trabalhadas
                 </Text>
               </View>
-              
-              <View style={[styles.statCard, { backgroundColor: currentTheme.surface }]}>
-                <Text style={[styles.statValue, { color: currentTheme.primary }]}>
+
+              <View
+                style={[
+                  styles.statCard,
+                  { backgroundColor: currentTheme.surfaceLight },
+                ]}
+              >
+                <Text
+                  style={[styles.statValue, { color: currentTheme.primary }]}
+                >
                   {formatCurrency(totalEarnings)}
                 </Text>
-                <Text style={[styles.statLabel, { color: currentTheme.textSecondary }]}>
-                  Ganhos Totais
+                <Text
+                  style={[styles.statLabel, { color: currentTheme.text }]}
+                >
+                  Ganhos
                 </Text>
               </View>
             </View>
-            
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
-                Eventos do Mês
-              </Text>
-              
-              <TouchableOpacity 
-                style={[
-                  styles.filterButton, 
-                  { 
-                    backgroundColor: paymentFilter !== 'all' 
-                      ? currentTheme.primary 
-                      : currentTheme.surface 
-                  }
-                ]}
-                onPress={togglePaymentFilter}
-              >
-                <Text style={[
-                  styles.filterButtonText, 
-                  { 
-                    color: paymentFilter !== 'all' 
-                      ? '#000' 
-                      : currentTheme.text 
-                  }
-                ]}>
-                  {paymentFilter === 'all' ? 'Todos' : 
-                   paymentFilter === 'paid' ? 'Pagos' : 'Pendentes'}
+
+            {loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={currentTheme.primary} />
+                <Text style={[styles.loadingText, { color: currentTheme.text }]}>
+                  Carregando relatórios...
                 </Text>
-              </TouchableOpacity>
-            </View>
-            
-            {filteredServices.length > 0 ? (
-              <FlatList
-                data={filteredServices}
-                renderItem={renderServiceItem}
-                keyExtractor={(item) => item.id}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 20 }}
-              />
-            ) : (
-              <View style={[styles.emptyContainer, { backgroundColor: currentTheme.surface, borderRadius: 12 }]}>
+              </View>
+            ) : services.length === 0 ? (
+              <View style={styles.emptyContainer}>
                 <FileText size={48} color={currentTheme.textSecondary} />
-                <Text style={[styles.emptyText, { color: currentTheme.textSecondary }]}>
-                  {services.length > 0 
-                    ? `Nenhum evento ${paymentFilter === 'paid' ? 'pago' : 'pendente'} encontrado.`
-                    : 'Nenhum evento encontrado para este mês.'}
+                <Text style={[styles.emptyText, { color: currentTheme.text }]}>
+                  Nenhum relatório encontrado para este mês
                 </Text>
-                <Text style={[{ color: currentTheme.textSecondary, textAlign: 'center' }]}>
-                  {services.length > 0 
-                    ? 'Tente outro filtro ou selecione outro mês.'
-                    : 'Selecione outro mês ou verifique se você tem eventos agendados.'}
+              </View>
+            ) : (
+              <View>
+                <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+                  Relatórios do Mês
                 </Text>
+                {filteredServices.map((service) => (
+                  <TouchableOpacity 
+                    key={service.id}
+                    style={[styles.card, { backgroundColor: currentTheme.surface }]}
+                    onPress={() => openServiceDetails(service)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.cardHeader}>
+                      <Text style={[styles.cardTitle, { color: currentTheme.text }]}>
+                        {service.StoreEvents.title}
+                      </Text>
+                      <View style={styles.badgeContainer}>
+                        <View style={styles.workTypeContainer}>
+                          <Text style={styles.workTypeText}>
+                            {formatWorkType(service.workType)}
+                          </Text>
+                        </View>
+                        
+                        {/* Badge de status de pagamento */}
+                        <View 
+                          style={[
+                            styles.paymentStatusBadge, 
+                            { backgroundColor: getPaymentStatusColor(service.paymentStatus).bg }
+                          ]}
+                        >
+                          <Text 
+                            style={[
+                              styles.paymentStatusText, 
+                              { color: getPaymentStatusColor(service.paymentStatus).text }
+                            ]}
+                          >
+                            {getPaymentStatusText(service.paymentStatus)}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.cardInfo}>
+                      <View style={styles.infoRow}>
+                        <Calendar size={16} color={currentTheme.primary} />
+                        <Text style={[styles.infoText, { color: currentTheme.text }]}>
+                          {formatDate(service.arriveMashguiachTime)}
+                        </Text>
+                      </View>
+                      
+                      {/* Horário Previsto */}
+                      <View style={styles.infoRow}>
+                        <Clock size={16} color={currentTheme.primary} />
+                        <Text style={[styles.infoText, { color: currentTheme.text }]}>
+                          <Text style={{ color: currentTheme.textSecondary }}>Previsto: </Text>
+                          {formatTime(service.arriveMashguiachTime)} - {formatTime(service.endMashguiachTime)}
+                        </Text>
+                      </View>
+                      
+                      {/* Horário Real (Ponto) */}
+                      <View style={styles.infoRow}>
+                        <Clock size={16} color={service.reallyMashguiachArrive ? '#10B981' : '#F59E0B'} />
+                        <Text style={[styles.infoText, { color: currentTheme.text }]}>
+                          <Text style={{ color: currentTheme.textSecondary }}>Check-in: </Text>
+                          {service.reallyMashguiachArrive 
+                            ? formatTime(service.reallyMashguiachArrive)
+                            : 'Não registrado'} 
+                          {' - '}
+                          {service.reallyMashguiachEndTime 
+                            ? formatTime(service.reallyMashguiachEndTime)
+                            : 'Não registrado'}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.infoRow}>
+                        <Building size={16} color={currentTheme.primary} />
+                        <Text style={[styles.infoText, { color: currentTheme.text }]}>
+                          Buffet: {service.StoreEvents.store?.title || 'Não informado'}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.infoRow}>
+                        <MapPin size={16} color={currentTheme.primary} />
+                        <Text style={[styles.infoText, { color: currentTheme.text }]}>
+                          {service.address_street}, {service.address_number} - {service.address_city}/{service.address_state}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.divider} />
+                      
+                      <View style={styles.priceContainer}>
+                        <Text style={[styles.priceLabel, { color: currentTheme.textSecondary }]}>
+                          Valor Total:
+                        </Text>
+                        <Text style={[styles.priceValue, { color: currentTheme.primary }]}>
+                          {formatCurrency(service.mashguiachPrice + service.transport_price)}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                ))}
               </View>
             )}
-          </>
-        )}
-      </View>
-      
-      {/* Modal de Detalhes do Serviço */}
+          </ScrollView>
+        </>
+      ) : (
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+        >
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+              Relatório de Trabalho Fixo
+            </Text>
+            <Text style={[styles.sectionDescription, { color: currentTheme.textSecondary }]}>
+              Gere um relatório detalhado do seu trabalho fixo em estabelecimentos, incluindo horas trabalhadas e valores.
+            </Text>
+            
+            <FixedJobReportButton />
+            
+            <View style={styles.infoCard}>
+              <FileText size={24} color={currentTheme.primary} />
+              <View style={styles.infoCardContent}>
+                <Text style={[styles.infoCardTitle, { color: currentTheme.text }]}>
+                  O que contém neste relatório?
+                </Text>
+                <Text style={[styles.infoCardText, { color: currentTheme.textSecondary }]}>
+                  • Informações do mashguiach{'\n'}
+                  • Resumo por estabelecimento{'\n'}
+                  • Detalhes dos dias trabalhados{'\n'}
+                  • Total de horas e valores
+                </Text>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      )}
+
+      {/* Modal de detalhes do relatório (manter o código existente) */}
       <Modal
         visible={detailsModalVisible}
         transparent

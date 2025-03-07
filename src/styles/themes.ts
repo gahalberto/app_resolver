@@ -8,6 +8,7 @@ export const themes = {
     textSecondary: '#a1a1aa', // zinc-400
     success: '#84cc16', // lime-300
     error: '#ef4444', // red-500
+    warning: '#f59e0b',
   },
   light: {
     background: '#f8fafc', // slate-50
@@ -18,5 +19,6 @@ export const themes = {
     textSecondary: '#64748b', // slate-500
     success: '#84cc16', // lime-600
     error: '#ef4444', // red-500
+    warning: '#f59e0b',
   }
 }; 

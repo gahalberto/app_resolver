@@ -14,6 +14,7 @@ interface User {
   name: string;
   email: string;
   token: string;
+  roleId: string;
 }
 
 interface RegisterProps {
@@ -62,7 +63,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       await userStorage.save(userData);
 
-      router.push("/mashguiach");
+      console.log("Login roleId:", userData.roleId);
+      
+      // Redirecionar com base no roleId
+      if (userData.roleId == 3) {
+        console.log("Redirecionando para /admin");
+        router.push("/admin" as any);
+      } else {
+        console.log("Redirecionando para /mashguiach");
+        router.push("/mashguiach" as any);
+      }
     } catch (error) {
       console.error("Erro no login:", error);
       throw new Error("Falha ao autenticar");

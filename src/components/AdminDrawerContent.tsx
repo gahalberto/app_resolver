@@ -9,20 +9,19 @@ import {
 import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
 import {
   Home,
-  BookOpen,
   Calendar,
-  Briefcase,
-  ClipboardList,
+  Users,
+  Building2,
+  Clock,
   FileText,
-  Files,
-  UserCircle,
   LogOut,
   Sun,
   Moon,
+  CalendarClock,
 } from "lucide-react-native";
 import { router } from "expo-router";
 
-export default function CustomDrawerContent(props: any) {
+export default function AdminDrawerContent(props: any) {
   const { user, logout } = useUser();
   const { theme, toggleTheme, isDarkMode } = useTheme();
   const currentTheme = themes[theme];
@@ -53,6 +52,19 @@ export default function CustomDrawerContent(props: any) {
     userEmail: {
       color: currentTheme.textSecondary,
       fontSize: 14,
+    },
+    roleTag: {
+      backgroundColor: currentTheme.primary,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+      alignSelf: 'flex-start',
+      marginTop: 4,
+    },
+    roleText: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: '500',
     },
     menuItem: {
       flexDirection: 'row',
@@ -109,42 +121,32 @@ export default function CustomDrawerContent(props: any) {
     {
       label: "Dashboard",
       icon: Home,
-      route: "/mashguiach",
+      route: "/admin",
     },
     {
-      label: "Cursos",
-      icon: BookOpen,
-      route: "/mashguiach/courses",
-    },
-    {
-      label: "Calendário de Eventos",
+      label: "Calendário",
       icon: Calendar,
-      route: "/mashguiach/events",
+      route: "/admin/calendar",
     },
     {
-      label: "Freelas Disponíveis",
-      icon: Briefcase,
-      route: "/mashguiach/available-jobs",
+      label: "Eventos",
+      icon: CalendarClock,
+      route: "/admin/events",
     },
     {
-      label: "Meus Freelas",
-      icon: ClipboardList,
-      route: "/mashguiach/my-jobs",
+      label: "Usuários",
+      icon: Users,
+      route: "/admin/users",
     },
     {
-      label: "Relatórios",
-      icon: Files,
-      route: "/mashguiach/reports",
+      label: "Estabelecimentos",
+      icon: Building2,
+      route: "/admin/establishments",
     },
     {
-      label: "Relatório de Trabalho Fixo",
-      icon: FileText,
-      route: "/mashguiach/fixed-job-report",
-    },
-    {
-      label: "Meu Perfil",
-      icon: UserCircle,
-      route: "/mashguiach/profile",
+      label: "Banco de Horas",
+      icon: Clock,
+      route: "/admin/hour-bank",
     },
   ];
 
@@ -155,6 +157,9 @@ export default function CustomDrawerContent(props: any) {
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.name}</Text>
             <Text style={styles.userEmail}>{user?.email}</Text>
+            <View style={styles.roleTag}>
+              <Text style={styles.roleText}>Administrador</Text>
+            </View>
           </View>
         </View>
 
@@ -210,4 +215,4 @@ export default function CustomDrawerContent(props: any) {
       </View>
     </View>
   );
-}
+} 

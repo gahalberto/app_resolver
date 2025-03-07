@@ -7,13 +7,14 @@ type userDetails = {
   name: string;
   email: string;
   token: string;
+  roleId: string;
 };
 
-async function save({ id, name, email, token }: userDetails) {
+async function save({ id, name, email, token, roleId }: userDetails) {
   try {
     await AsyncStorage.setItem(
       USER_STORAGE_KEY,
-      JSON.stringify({ id, name, email, token })
+      JSON.stringify({ id, name, email, token, roleId })
     );
   } catch (error) {
     throw error;
@@ -22,8 +23,11 @@ async function save({ id, name, email, token }: userDetails) {
 
 async function get() {
   try {
-    const user = await AsyncStorage.getItem(USER_STORAGE_KEY);
-    return user ? JSON.parse(user) : null; // Corrigido para fazer o parsing
+    const userData = await AsyncStorage.getItem(USER_STORAGE_KEY);
+    if (userData) {
+      return JSON.parse(userData);
+    }
+    return null;
   } catch (error) {
     throw error;
   }

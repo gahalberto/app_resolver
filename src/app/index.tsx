@@ -142,15 +142,20 @@ export default function Index() {
 
   async function getUser() {
     try {
-      const userId = await userStorage.get();
-      if (!userId) {
+      const userData = await userStorage.get();
+      if (!userData) {
         return setIsGettingUser(false);
       }
 
-      // const trip = await tripServer.getById(userId);
-
-      if (userId) {
-        router.navigate(`/mashguiach`);
+      console.log("GetUser roleId:", userData.roleId);
+      
+      // Redirecionar com base no roleId
+      if (userData.roleId == 3) {
+        console.log("Redirecionando para /admin");
+        router.push("/admin" as any);
+      } else {
+        console.log("Redirecionando para /mashguiach");
+        router.push("/mashguiach" as any);
       }
     } catch (error) {
       setIsGettingUser(false);

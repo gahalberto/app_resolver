@@ -1,28 +1,26 @@
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { Drawer } from "expo-router/drawer";
+import { colors } from "@/styles/colors";
+import { UserProvider } from "@/contexts/UserContext";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { useUser } from "@/contexts/UserContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { themes } from "@/styles/themes";
-import {
-  DrawerContentScrollView,
-  DrawerItemList,
-  DrawerItem,
-} from "@react-navigation/drawer";
-import { Text, View, Image, TouchableOpacity, StyleSheet } from "react-native";
-import {
-  Home,
-  BookOpen,
-  Calendar,
-  Briefcase,
-  ClipboardList,
-  FileText,
-  Files,
-  UserCircle,
-  LogOut,
-  Sun,
-  Moon,
+import { 
+  Home, 
+  Calendar, 
+  Users, 
+  Building2, 
+  Clock, 
+  LogOut, 
+  Sun, 
+  Moon, 
+  CalendarClock
 } from "lucide-react-native";
 import { router } from "expo-router";
 
-export default function CustomDrawerContent(props: any) {
+function AdminDrawerContent(props: any) {
   const { user, logout } = useUser();
   const { theme, toggleTheme, isDarkMode } = useTheme();
   const currentTheme = themes[theme];
@@ -32,6 +30,39 @@ export default function CustomDrawerContent(props: any) {
     router.replace("/");
   };
 
+  const menuItems = [
+    {
+      label: "Dashboard",
+      icon: Home,
+      route: "/admin",
+    },
+    {
+      label: "Calendário",
+      icon: Calendar,
+      route: "/admin/calendar",
+    },
+    {
+      label: "Eventos",
+      icon: CalendarClock,
+      route: "/admin/events",
+    },
+    {
+      label: "Usuários",
+      icon: Users,
+      route: "/admin/users",
+    },
+    {
+      label: "Estabelecimentos",
+      icon: Building2,
+      route: "/admin/establishments",
+    },
+    {
+      label: "Banco de Horas",
+      icon: Clock,
+      route: "/admin/hour-bank",
+    },
+  ];
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -40,7 +71,8 @@ export default function CustomDrawerContent(props: any) {
     header: {
       padding: 16,
       borderBottomWidth: 1,
-      borderBottomColor: currentTheme.surface,
+      borderBottomColor: currentTheme.surfaceLight,
+      marginBottom: 8,
     },
     userInfo: {
       marginTop: 8,
@@ -53,6 +85,20 @@ export default function CustomDrawerContent(props: any) {
     userEmail: {
       color: currentTheme.textSecondary,
       fontSize: 14,
+      marginTop: 4,
+    },
+    roleTag: {
+      backgroundColor: currentTheme.primary,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+      alignSelf: 'flex-start',
+      marginTop: 8,
+    },
+    roleText: {
+      color: '#fff',
+      fontSize: 12,
+      fontWeight: '500',
     },
     menuItem: {
       flexDirection: 'row',
@@ -72,11 +118,12 @@ export default function CustomDrawerContent(props: any) {
     },
     menuItemTextActive: {
       color: currentTheme.primary,
+      fontWeight: '600',
     },
     footer: {
       padding: 16,
       borderTopWidth: 1,
-      borderTopColor: currentTheme.surface,
+      borderTopColor: currentTheme.surfaceLight,
     },
     themeButton: {
       flexDirection: 'row',
@@ -105,49 +152,6 @@ export default function CustomDrawerContent(props: any) {
     },
   });
 
-  const menuItems = [
-    {
-      label: "Dashboard",
-      icon: Home,
-      route: "/mashguiach",
-    },
-    {
-      label: "Cursos",
-      icon: BookOpen,
-      route: "/mashguiach/courses",
-    },
-    {
-      label: "Calendário de Eventos",
-      icon: Calendar,
-      route: "/mashguiach/events",
-    },
-    {
-      label: "Freelas Disponíveis",
-      icon: Briefcase,
-      route: "/mashguiach/available-jobs",
-    },
-    {
-      label: "Meus Freelas",
-      icon: ClipboardList,
-      route: "/mashguiach/my-jobs",
-    },
-    {
-      label: "Relatórios",
-      icon: Files,
-      route: "/mashguiach/reports",
-    },
-    {
-      label: "Relatório de Trabalho Fixo",
-      icon: FileText,
-      route: "/mashguiach/fixed-job-report",
-    },
-    {
-      label: "Meu Perfil",
-      icon: UserCircle,
-      route: "/mashguiach/profile",
-    },
-  ];
-
   return (
     <View style={styles.container}>
       <DrawerContentScrollView {...props}>
@@ -155,6 +159,9 @@ export default function CustomDrawerContent(props: any) {
           <View style={styles.userInfo}>
             <Text style={styles.userName}>{user?.name}</Text>
             <Text style={styles.userEmail}>{user?.email}</Text>
+            <View style={styles.roleTag}>
+              <Text style={styles.roleText}>Administrador</Text>
+            </View>
           </View>
         </View>
 
@@ -211,3 +218,60 @@ export default function CustomDrawerContent(props: any) {
     </View>
   );
 }
+
+export default function AdminLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <UserProvider>
+        <Drawer
+          drawerContent={(props) => <AdminDrawerContent {...props} />}
+          screenOptions={{
+            headerShown: false,
+            drawerStyle: {
+              backgroundColor: colors.bkblue[800],
+              width: 320,
+            },
+          }}
+        >
+          <Drawer.Screen
+            name="(tabs)"
+            options={{
+              drawerLabel: "Dashboard",
+              headerShown: false,
+            }}
+          />
+          <Drawer.Screen
+            name="calendar"
+            options={{
+              drawerLabel: "Calendário",
+            }}
+          />
+          <Drawer.Screen
+            name="events"
+            options={{
+              drawerLabel: "Eventos",
+            }}
+          />
+          <Drawer.Screen
+            name="users"
+            options={{
+              drawerLabel: "Usuários",
+            }}
+          />
+          <Drawer.Screen
+            name="establishments"
+            options={{
+              drawerLabel: "Estabelecimentos",
+            }}
+          />
+          <Drawer.Screen
+            name="hour-bank"
+            options={{
+              drawerLabel: "Banco de Horas",
+            }}
+          />
+        </Drawer>
+      </UserProvider>
+    </GestureHandlerRootView>
+  );
+} 

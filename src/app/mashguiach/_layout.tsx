@@ -61,6 +61,12 @@ export default function Layout() {
               drawerLabel: "Relatórios",
             }}
           />
+          <Drawer.Screen
+            name="fixed-job-report"
+            options={{
+              drawerLabel: "Relatório de Trabalho Fixo",
+            }}
+          />
         </Drawer>
       </UserProvider>
     </GestureHandlerRootView>
