@@ -117,13 +117,13 @@ export default function EventEditPage() {
   const [editingService, setEditingService] = useState(false);
   const [editedService, setEditedService] = useState<Partial<EventService>>({});
   const [serviceModalVisible, setServiceModalVisible] = useState(false);
-  const [availableMashguiachim, setAvailableMashguiachim] = useState<AvailableMashguiach[]>([]);
+  const [availableMashguichim, setAvailableMashguichim] = useState<AvailableMashguiach[]>([]);
   const [showMashguiachDropdown, setShowMashguiachDropdown] = useState(false);
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [showPaymentStatusDropdown, setShowPaymentStatusDropdown] = useState(false);
   const [showWorkTypeDropdown, setShowWorkTypeDropdown] = useState(false);
-  const [loadingMashguiachim, setLoadingMashguiachim] = useState(false);
+  const [loadingMashguichim, setLoadingMashguichim] = useState(false);
   const [canSelectMashguiach, setCanSelectMashguiach] = useState(false);
 
   useEffect(() => {
@@ -143,7 +143,7 @@ export default function EventEditPage() {
           id
         }
       });
-      
+
       if (response.data.success) {
         setEvent(response.data.event);
         setEditedEvent({
@@ -187,20 +187,20 @@ export default function EventEditPage() {
   const handleSaveEvent = async () => {
     try {
       setSaving(true);
-      
+
       // Preparar dados para envio
       const eventData = {
         id,
         ...editedEvent
       };
-      
+
       // Usar o endpoint para salvar evento
       const response = await api.put('/admin/updateEvent', eventData, {
         headers: {
           Authorization: `Bearer ${user?.token}`
         }
       });
-      
+
       if (response.data.success) {
         Alert.alert("Sucesso", "Dados do evento atualizados com sucesso");
         // Atualizar os dados do evento
@@ -218,9 +218,9 @@ export default function EventEditPage() {
     }
   };
 
-  const fetchAvailableMashguiachim = async (startDateTime: string, endDateTime: string) => {
+  const fetchAvailableMashguichim = async (startDateTime: string, endDateTime: string) => {
     try {
-      setLoadingMashguiachim(true);
+      setLoadingMashguichim(true);
       const response = await api.get('/admin/getMashguichimAvalaible', {
         headers: {
           Authorization: `Bearer ${user?.token}`
@@ -230,15 +230,15 @@ export default function EventEditPage() {
           endDateTime
         }
       });
-      
+
       if (response.data && Array.isArray(response.data.data)) {
-        setAvailableMashguiachim(response.data.data);
+        setAvailableMashguichim(response.data.data);
       }
     } catch (err) {
-      console.error("Erro ao buscar mashguiachim disponíveis:", err);
-      Alert.alert("Erro", "Não foi possível carregar os mashguiachim disponíveis");
+      console.error("Erro ao buscar mashguichim disponíveis:", err);
+      Alert.alert("Erro", "Não foi possível carregar os mashguichim disponíveis");
     } finally {
-      setLoadingMashguiachim(false);
+      setLoadingMashguichim(false);
     }
   };
 
@@ -274,22 +274,22 @@ export default function EventEditPage() {
 
   const handleServiceSave = async () => {
     if (!selectedService) return;
-    
+
     try {
       setSaving(true);
-      
+
       // Preparar dados para envio
       const serviceData = {
         id: selectedService.id,
         ...editedService
       };
-      
+
       const response = await api.put('/admin/updateEventService', serviceData, {
         headers: {
           Authorization: `Bearer ${user?.token}`
         }
       });
-      
+
       if (response.data && response.data.success) {
         Alert.alert("Sucesso", "Serviço atualizado com sucesso");
         closeServiceModal();
@@ -314,12 +314,12 @@ export default function EventEditPage() {
         ...prev,
         arriveMashguiachTime: formattedDate
       }));
-      
-      // Verificar se ambas as datas estão selecionadas para habilitar a seleção de mashguiach
+
+      // Verificar se ambas as datas estão selecionadas para habilitar a seleção de mashguichim
       if (editedService.endMashguiachTime) {
         setCanSelectMashguiach(true);
-        // Buscar mashguiachim disponíveis com as novas datas
-        fetchAvailableMashguiachim(formattedDate, editedService.endMashguiachTime);
+        // Buscar mashguichim disponíveis com as novas datas
+        fetchAvailableMashguichim(formattedDate, editedService.endMashguiachTime);
       }
     }
   };
@@ -332,35 +332,35 @@ export default function EventEditPage() {
         ...prev,
         endMashguiachTime: formattedDate
       }));
-      
-      // Verificar se ambas as datas estão selecionadas para habilitar a seleção de mashguiach
+
+      // Verificar se ambas as datas estão selecionadas para habilitar a seleção de mashguichim
       if (editedService.arriveMashguiachTime) {
         setCanSelectMashguiach(true);
-        // Buscar mashguiachim disponíveis com as novas datas
-        fetchAvailableMashguiachim(editedService.arriveMashguiachTime, formattedDate);
+        // Buscar mashguichim disponíveis com as novas datas
+        fetchAvailableMashguichim(editedService.arriveMashguiachTime, formattedDate);
       }
     }
   };
 
-  const selectMashguiach = (mashguiach: AvailableMashguiach) => {
+  const selectMashguiach = (mashguichim: AvailableMashguiach) => {
     setEditedService(prev => ({
       ...prev,
-      mashguiachId: mashguiach.id
+      mashguiachId: mashguichim.id
     }));
     setShowMashguiachDropdown(false);
   };
 
   const getSelectedMashguiachName = () => {
-    if (!editedService.mashguiachId) return "Selecione um mashguiach";
-    
-    const selectedMashguiach = availableMashguiachim.find(m => m.id === editedService.mashguiachId);
-    if (selectedMashguiach) return selectedMashguiach.name;
-    
-    // Se o mashguiach selecionado não estiver na lista de disponíveis
+    if (!editedService.mashguiachId) return "Selecione um mashguichim";
+
+    const selectedMashguichim = availableMashguichim.find(m => m.id === editedService.mashguiachId);
+    if (selectedMashguichim) return selectedMashguichim.name;
+
+    // Se o mashguichim selecionado não estiver na lista de disponíveis
     // (pode acontecer se ele for o atualmente atribuído e não estiver disponível agora)
     if (selectedService?.Mashguiach) return selectedService.Mashguiach.name + " (atual)";
-    
-    return "Mashguiach não encontrado";
+
+    return "Mashguichim não encontrado";
   };
 
   const selectPaymentStatus = (status: string) => {
@@ -440,7 +440,7 @@ export default function EventEditPage() {
   };
 
   const renderServiceItem = ({ item }: { item: EventService }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.serviceCard}
       onPress={() => openServiceEditModal(item)}
     >
@@ -448,35 +448,35 @@ export default function EventEditPage() {
         <Text style={styles.serviceTitle}>
           {item.workType === 'PRODUCAO' ? 'Produção' : 'Evento'}
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.editButton}
           onPress={() => openServiceEditModal(item)}
         >
           <Edit size={18} color={currentTheme.primary} />
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.serviceInfo}>
         <Clock size={16} color="#FFFFFF" />
         <Text style={styles.serviceInfoText}>
           {formatTime(item.arriveMashguiachTime)} - {formatTime(item.endMashguiachTime)}
         </Text>
       </View>
-      
+
       <View style={styles.serviceInfo}>
         <User size={16} color="#FFFFFF" />
         <Text style={styles.serviceInfoText}>
-          Mashguiach: {item.Mashguiach ? item.Mashguiach.name : 'Não atribuído'}
+          Mashguichim: {item.Mashguiach ? item.Mashguiach.name : 'Não atribuído'}
         </Text>
       </View>
-      
+
       <View style={styles.serviceInfo}>
         <MapPin size={16} color="#FFFFFF" />
         <Text style={styles.serviceInfoText}>
           {item.address_city}, {item.address_state}
         </Text>
       </View>
-      
+
       <View style={styles.serviceFooter}>
         <View style={styles.serviceStatus}>
           {getStatusIcon(item.isApproved)}
@@ -484,13 +484,13 @@ export default function EventEditPage() {
             {getStatusText(item.isApproved)}
           </Text>
         </View>
-        
+
         <View style={styles.serviceStatus}>
           <Text style={[styles.paymentStatus, { color: getPaymentStatusColor(item.paymentStatus) }]}>
             {getPaymentStatusText(item.paymentStatus)}
           </Text>
         </View>
-        
+
         <Text style={styles.servicePrice}>
           R$ {item.mashguiachPrice.toFixed(2)}
         </Text>
@@ -828,7 +828,7 @@ export default function EventEditPage() {
                 placeholderTextColor={currentTheme.textSecondary}
               />
             </View>
-            
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Responsável</Text>
               <TextInput
@@ -839,7 +839,7 @@ export default function EventEditPage() {
                 placeholderTextColor={currentTheme.textSecondary}
               />
             </View>
-            
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Telefone do Responsável</Text>
               <TextInput
@@ -851,7 +851,7 @@ export default function EventEditPage() {
                 keyboardType="phone-pad"
               />
             </View>
-            
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Número de Participantes</Text>
               <TextInput
@@ -863,7 +863,7 @@ export default function EventEditPage() {
                 keyboardType="number-pad"
               />
             </View>
-            
+
             <View style={styles.formGroup}>
               <Text style={styles.label}>Tipo de Evento</Text>
               <TextInput
@@ -873,10 +873,10 @@ export default function EventEditPage() {
                 placeholder="Tipo de evento"
                 placeholderTextColor={currentTheme.textSecondary}
               />
-            </View>          
-            
-            <TouchableOpacity 
-              style={styles.saveButton} 
+            </View>
+
+            <TouchableOpacity
+              style={styles.saveButton}
               onPress={handleSaveEvent}
               disabled={saving}
             >
@@ -889,9 +889,9 @@ export default function EventEditPage() {
                 </>
               )}
             </TouchableOpacity>
-            
+
             <Text style={styles.sectionTitle}>Serviços do Evento</Text>
-            
+
             {event && event.EventsServices && event.EventsServices.length > 0 ? (
               <FlatList
                 data={event.EventsServices}
@@ -948,7 +948,7 @@ export default function EventEditPage() {
                 <XCircle size={24} color={currentTheme.textSecondary} />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={{
               padding: 16,
             }}>
@@ -959,13 +959,13 @@ export default function EventEditPage() {
                   onPress={() => setShowWorkTypeDropdown(!showWorkTypeDropdown)}
                 >
                   <Text style={styles.dropdownText}>
-                    {editedService.workType === 'PRODUCAO' ? 'Produção' : 
-                     editedService.workType === 'EVENTO' ? 'Evento' : 
+                    {editedService.workType === 'PRODUCAO' ? 'Produção' :
+                     editedService.workType === 'EVENTO' ? 'Evento' :
                      editedService.workType === 'SUBSTITUICAO' ? 'Substituição' : 'Selecionar tipo'}
                   </Text>
                   <ChevronDown size={20} color={currentTheme.textSecondary} />
                 </TouchableOpacity>
-                
+
                 {showWorkTypeDropdown && (
                   <View style={styles.dropdownMenu}>
                     {['PRODUCAO', 'EVENTO', 'SUBSTITUICAO'].map((type) => (
@@ -978,8 +978,8 @@ export default function EventEditPage() {
                         }}
                       >
                         <Text style={styles.dropdownItemText}>
-                          {type === 'PRODUCAO' ? 'Produção' : 
-                           type === 'EVENTO' ? 'Evento' : 
+                          {type === 'PRODUCAO' ? 'Produção' :
+                           type === 'EVENTO' ? 'Evento' :
                            type === 'SUBSTITUICAO' ? 'Substituição' : type}
                         </Text>
                       </TouchableOpacity>
@@ -1003,7 +1003,7 @@ export default function EventEditPage() {
               />
 
               <MashguiachSelector
-                label="Mashguiach"
+                label="Mashguichim"
                 value={editedService.mashguiachId || null}
                 onChange={(mashguiachId) => {
                   // Se for a opção "Aleatório", definir como null
@@ -1027,8 +1027,8 @@ export default function EventEditPage() {
                   <TextInput
                     style={styles.input}
                     value={
-                      editedService.mashguiachPrice !== undefined 
-                        ? editedService.mashguiachPrice.toString() 
+                      editedService.mashguiachPrice !== undefined
+                        ? editedService.mashguiachPrice.toString()
                         : ''
                     }
                     onChangeText={(text) => handleServiceInputChange('mashguiachPrice', parseFloat(text) || 0)}
@@ -1052,7 +1052,7 @@ export default function EventEditPage() {
                 theme={currentTheme}
               />
             </ScrollView>
-            
+
             <View style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
@@ -1061,7 +1061,7 @@ export default function EventEditPage() {
               borderTopColor: currentTheme.surfaceLight,
               backgroundColor: currentTheme.surface,
             }}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={{
                   paddingVertical: 10,
                   paddingHorizontal: 16,
@@ -1076,8 +1076,8 @@ export default function EventEditPage() {
                   fontWeight: '600',
                 }}>Cancelar</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
+
+              <TouchableOpacity
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -1108,4 +1108,4 @@ export default function EventEditPage() {
       </Modal>
     </SafeAreaView>
   );
-} 
+}

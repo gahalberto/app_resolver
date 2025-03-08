@@ -7,15 +7,15 @@ import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { useUser } from "@/contexts/UserContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { themes } from "@/styles/themes";
-import { 
-  Home, 
-  Calendar, 
-  Users, 
-  Building2, 
-  Clock, 
-  LogOut, 
-  Sun, 
-  Moon, 
+import {
+  Home,
+  Calendar,
+  Users,
+  Building2,
+  Clock,
+  LogOut,
+  Sun,
+  Moon,
   CalendarClock
 } from "lucide-react-native";
 import { router } from "expo-router";
@@ -45,6 +45,11 @@ function AdminDrawerContent(props: any) {
       label: "Eventos",
       icon: CalendarClock,
       route: "/admin/events",
+    },
+    {
+      label: "Mashguichim",
+      icon: Users,
+      route: "/admin/mashguichim",
     },
     {
       label: "Usuários",
@@ -253,6 +258,12 @@ export default function AdminLayout() {
             }}
           />
           <Drawer.Screen
+            name="mashguichim"
+            options={{
+              drawerLabel: "Mashguichim",
+            }}
+          />
+          <Drawer.Screen
             name="users"
             options={{
               drawerLabel: "Usuários",
@@ -274,4 +285,4 @@ export default function AdminLayout() {
       </UserProvider>
     </GestureHandlerRootView>
   );
-} 
+}

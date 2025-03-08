@@ -36,11 +36,11 @@ interface UpdateUserData extends Partial<Mashguiach> {
   password?: string;
 }
 
-export default function MashguiachimPage() {
+export default function MashguichimPage() {
   const { theme, isDarkMode } = useTheme();
   const currentTheme = themes[theme];
   const { user } = useUser();
-  const [mashguiachim, setMashguiachim] = useState<Mashguiach[]>([]);
+  const [mashguichim, setMashguichim] = useState<Mashguiach[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,10 +52,10 @@ export default function MashguiachimPage() {
   const [changePassword, setChangePassword] = useState(false);
 
   useEffect(() => {
-    fetchMashguiachim();
+    fetchMashguichim();
   }, [user]);
 
-  const fetchMashguiachim = async () => {
+  const fetchMashguichim = async () => {
     try {
       setLoading(true);
       const response = await api.get('/admin/getAllMashguichim', {
@@ -63,11 +63,11 @@ export default function MashguiachimPage() {
           Authorization: `Bearer ${user?.token}`
         }
       });
-      setMashguiachim(response.data.mashguichim);
+      setMashguichim(response.data.mashguichim);
       setError(null);
     } catch (err) {
-      console.error("Erro ao buscar mashguiachim:", err);
-      setError("Não foi possível carregar a lista de mashguiachim");
+      console.error("Erro ao buscar mashguichim:", err);
+      setError("Não foi possível carregar a lista de mashguichim");
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ export default function MashguiachimPage() {
     setSearchQuery(text);
   };
 
-  const filteredMashguiachim = mashguiachim.filter(item => 
+  const filteredMashguichim = mashguichim.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     item.phone.includes(searchQuery)
@@ -122,38 +122,38 @@ export default function MashguiachimPage() {
 
   const handleSave = async () => {
     if (!selectedMashguiach) return;
-    
+
     try {
       setLoading(true);
-      
+
       // Preparar dados para envio
       const userData: UpdateUserData = {
         id: selectedMashguiach.id,
         ...editedMashguiach
       };
-      
+
       // Adicionar senha se estiver alterando
       if (changePassword && newPassword.trim()) {
         userData.password = newPassword.trim();
       }
-      
+
       // Usar o endpoint correto para salvar usuário
       const response = await api.put('/admin/saveUser', userData, {
         headers: {
           Authorization: `Bearer ${user?.token}`
         }
       });
-      
+
       if (response.data.success) {
         // Atualiza a lista local
-        setMashguiachim(prev => 
-          prev.map(item => 
-            item.id === selectedMashguiach.id 
-              ? { ...item, ...editedMashguiach } 
+        setMashguichim(prev =>
+          prev.map(item =>
+            item.id === selectedMashguiach.id
+              ? { ...item, ...editedMashguiach }
               : item
           )
         );
-        
+
         Alert.alert("Sucesso", "Dados do mashguiach atualizados com sucesso");
         closeModal();
         setError(null);
@@ -386,7 +386,7 @@ export default function MashguiachimPage() {
   });
 
   const renderItem = ({ item }: { item: Mashguiach }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.itemContainer}
       onPress={() => openEditModal(item)}
     >
@@ -398,7 +398,7 @@ export default function MashguiachimPage() {
         <Text style={styles.itemEmail}>{item.email}</Text>
         <Text style={styles.itemPhone}>{item.phone}</Text>
       </View>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.editButton}
         onPress={() => openEditModal(item)}
       >
@@ -407,10 +407,10 @@ export default function MashguiachimPage() {
     </TouchableOpacity>
   );
 
-  if (loading && mashguiachim.length === 0) {
+  if (loading && mashguichim.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <Header title="Mashguiachim" />
+        <Header title="Mashguichim" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={currentTheme.primary} />
           <Text style={{ color: currentTheme.text, marginTop: 16 }}>Carregando dados...</Text>
@@ -421,7 +421,7 @@ export default function MashguiachimPage() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Mashguiachim" />
+      <Header title="Mashguichim" />
       <View style={styles.content}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <ChevronLeft size={20} color={currentTheme.primary} />
@@ -429,8 +429,8 @@ export default function MashguiachimPage() {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Mashguiachim</Text>
-          <Text style={styles.subtitle}>Gerenciar mashguiachim do sistema</Text>
+          <Text style={styles.title}>Mashguichim</Text>
+          <Text style={styles.subtitle}>Gerenciar mashguichim do sistema</Text>
         </View>
 
         <View style={styles.searchContainer}>
@@ -446,13 +446,13 @@ export default function MashguiachimPage() {
 
         {error ? (
           <Text style={styles.errorText}>{error}</Text>
-        ) : filteredMashguiachim.length === 0 ? (
+        ) : filteredMashguichim.length === 0 ? (
           <Text style={styles.emptyText}>
-            {searchQuery ? "Nenhum mashguiach encontrado" : "Não há mashguiachim cadastrados"}
+            {searchQuery ? "Nenhum mashguiach encontrado" : "Não há mashguichim cadastrados"}
           </Text>
         ) : (
           <FlatList
-            data={filteredMashguiachim}
+            data={filteredMashguichim}
             renderItem={renderItem}
             keyExtractor={item => item.id}
             style={styles.listContainer}
@@ -474,7 +474,7 @@ export default function MashguiachimPage() {
                   <X size={24} color={currentTheme.text} />
                 </TouchableOpacity>
               </View>
-              
+
               <ScrollView style={styles.modalBody}>
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Nome</Text>
@@ -486,7 +486,7 @@ export default function MashguiachimPage() {
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Nome Judaico</Text>
                   <TextInput
@@ -497,7 +497,7 @@ export default function MashguiachimPage() {
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Email</Text>
                   <TextInput
@@ -509,7 +509,7 @@ export default function MashguiachimPage() {
                     keyboardType="email-address"
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Telefone</Text>
                   <TextInput
@@ -521,7 +521,7 @@ export default function MashguiachimPage() {
                     keyboardType="phone-pad"
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Chave PIX</Text>
                   <TextInput
@@ -532,7 +532,7 @@ export default function MashguiachimPage() {
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>
-                
+
                 <View style={styles.passwordSection}>
                   <View style={styles.passwordHeader}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -549,7 +549,7 @@ export default function MashguiachimPage() {
                       />
                     </View>
                   </View>
-                  
+
                   {changePassword && (
                     <View style={styles.formGroup}>
                       <Text style={styles.label}>Nova Senha</Text>
@@ -562,7 +562,7 @@ export default function MashguiachimPage() {
                           placeholderTextColor={currentTheme.textSecondary}
                           secureTextEntry={!showPassword}
                         />
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.passwordToggle}
                           onPress={() => setShowPassword(!showPassword)}
                         >
@@ -576,9 +576,9 @@ export default function MashguiachimPage() {
                     </View>
                   )}
                 </View>
-                
+
                 <Text style={[styles.label, { marginTop: 8, fontWeight: '600' }]}>Endereço</Text>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>CEP</Text>
                   <TextInput
@@ -589,7 +589,7 @@ export default function MashguiachimPage() {
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Rua</Text>
                   <TextInput
@@ -600,7 +600,7 @@ export default function MashguiachimPage() {
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Número</Text>
                   <TextInput
@@ -611,7 +611,7 @@ export default function MashguiachimPage() {
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Bairro</Text>
                   <TextInput
@@ -622,7 +622,7 @@ export default function MashguiachimPage() {
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Cidade</Text>
                   <TextInput
@@ -633,7 +633,7 @@ export default function MashguiachimPage() {
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>
-                
+
                 <View style={styles.formGroup}>
                   <Text style={styles.label}>Estado</Text>
                   <TextInput
@@ -645,7 +645,7 @@ export default function MashguiachimPage() {
                   />
                 </View>
               </ScrollView>
-              
+
               <View style={styles.modalFooter}>
                 <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
                   <Save size={20} color="#FFFFFF" />
@@ -658,4 +658,4 @@ export default function MashguiachimPage() {
       </View>
     </SafeAreaView>
   );
-} 
+}

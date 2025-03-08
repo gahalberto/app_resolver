@@ -19,8 +19,11 @@ export default function AdminHourBankPage() {
       justifyContent: 'center',
       alignItems: 'center',
     },
+    header: {
+      marginBottom: 24,
+    },
     title: {
-      fontSize: 20,
+      fontSize: 24,
       fontWeight: 'bold',
       color: currentTheme.text,
       marginBottom: 8,
@@ -28,7 +31,6 @@ export default function AdminHourBankPage() {
     subtitle: {
       fontSize: 16,
       color: currentTheme.textSecondary,
-      textAlign: 'center',
     },
   });
 
@@ -36,11 +38,13 @@ export default function AdminHourBankPage() {
     <SafeAreaView style={styles.container}>
       <Header title="Banco de Horas" />
       <View style={styles.content}>
-        <Text style={styles.title}>Gerenciamento de Banco de Horas</Text>
-        <Text style={styles.subtitle}>
-          Esta página permitirá gerenciar o banco de horas dos mashguiachim.
-        </Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Banco de Horas</Text>
+          <Text style={styles.subtitle}>
+            Esta página permitirá gerenciar o banco de horas dos mashguichim.
+          </Text>
+        </View>
       </View>
     </SafeAreaView>
   );
-} 
+}

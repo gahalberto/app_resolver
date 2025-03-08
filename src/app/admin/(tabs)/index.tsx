@@ -4,10 +4,10 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { themes } from "@/styles/themes";
 import { Header } from "@/components/Header";
 import { useState, useEffect } from "react";
-import { 
-  Users, 
-  Store, 
-  Calendar, 
+import {
+  Users,
+  Store,
+  Calendar,
   Clock,
   ArrowRight,
   CheckCircle2,
@@ -81,12 +81,12 @@ interface DashboardData {
 const EventItem = ({ event }: { event: any }) => {
   const { theme } = useTheme();
   const currentTheme = themes[theme];
-  
+
   // Verifica se o evento é válido
   if (!event || typeof event !== 'object') {
     return null;
   }
-  
+
   // Funções auxiliares para renderização
   const formatTime = (dateString: string | undefined) => {
     if (!dateString) return '--:--';
@@ -100,7 +100,7 @@ const EventItem = ({ event }: { event: any }) => {
       return '--:--';
     }
   };
-  
+
   const getStatusColor = () => {
     if (event.isApproved) {
       return currentTheme.success;
@@ -110,7 +110,7 @@ const EventItem = ({ event }: { event: any }) => {
       return currentTheme.error;
     }
   };
-  
+
   const getStatusText = () => {
     if (event.isApproved) {
       return "Aprovado";
@@ -120,7 +120,7 @@ const EventItem = ({ event }: { event: any }) => {
       return "Pendente";
     }
   };
-  
+
   const getStatusIcon = () => {
     if (event.isApproved) {
       return <CheckCircle2 size={16} color={currentTheme.success} />;
@@ -130,7 +130,7 @@ const EventItem = ({ event }: { event: any }) => {
       return <XCircle size={16} color={currentTheme.error} />;
     }
   };
-  
+
   // Estilos locais
   const styles = StyleSheet.create({
     eventItem: {
@@ -187,12 +187,12 @@ const EventItem = ({ event }: { event: any }) => {
       marginLeft: 4,
     },
   });
-  
+
   // Garante que StoreEvents existe
   const storeEvents = event.StoreEvents || {};
   const store = storeEvents.store || {};
   const mashguiach = event.Mashguiach || {};
-  
+
   return (
     <View key={event.id} style={styles.eventItem}>
       <View style={styles.eventHeader}>
@@ -201,9 +201,9 @@ const EventItem = ({ event }: { event: any }) => {
         </Text>
         <View style={styles.eventStatus}>
           {getStatusIcon()}
-          <Text 
+          <Text
             style={[
-              styles.eventStatusText, 
+              styles.eventStatusText,
               { color: getStatusColor() }
             ]}
           >
@@ -211,7 +211,7 @@ const EventItem = ({ event }: { event: any }) => {
           </Text>
         </View>
       </View>
-      
+
       <View style={styles.eventInfo}>
         <Text style={styles.eventInfoText}>
           Estabelecimento: {typeof store.title === 'string' ? store.title : 'Não informado'}
@@ -226,7 +226,7 @@ const EventItem = ({ event }: { event: any }) => {
           Tipo: {typeof storeEvents.eventType === 'string' ? storeEvents.eventType : 'Não informado'} | {typeof event.workType === 'string' ? event.workType : 'Não informado'}
         </Text>
       </View>
-      
+
       <View style={styles.eventTimeContainer}>
         <View style={styles.eventTime}>
           <Clock size={14} color={currentTheme.textSecondary} />
@@ -264,7 +264,7 @@ export default function AdminDashboardPage() {
           Authorization: `Bearer ${user?.token}`
         }
       });
-      
+
       // Tratar possíveis problemas com os dados
       const safeData = {
         mashguiachCount: response.data?.mashguiachCount || 0,
@@ -275,7 +275,7 @@ export default function AdminDashboardPage() {
         pedingEvents: Array.isArray(response.data?.pedingEvents) ? response.data.pedingEvents : [],
         todayEvents: Array.isArray(response.data?.todayEvents) ? response.data.todayEvents : []
       };
-      
+
       setDashboardData(safeData);
       setError(null);
     } catch (err) {
@@ -290,12 +290,12 @@ export default function AdminDashboardPage() {
     if (user?.token) {
       // Verificar se temos dados em cache
       const cachedData = getCachedDashboardData();
-      
+
       if (cachedData) {
         // Se temos dados em cache, usamos eles primeiro
         setDashboardData(cachedData);
         setLoading(false);
-        
+
         // E então atualizamos em segundo plano
         fetchBasicDashboardData();
       } else {
@@ -455,11 +455,11 @@ export default function AdminDashboardPage() {
         )}
 
         <View style={styles.statsContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.statCard}
-            onPress={() => router.push('/admin/mashguiachim' as any)}
+            onPress={() => router.push('/admin/mashguichim' as any)}
           >
-            <Text style={styles.statTitle} numberOfLines={2}>Mashguiachim</Text>
+            <Text style={styles.statTitle} numberOfLines={2}>Mashguichim</Text>
             <View style={styles.statValueContainer}>
               <View style={styles.statIcon}>
                 <Users size={20} color={currentTheme.primary} />
@@ -470,7 +470,7 @@ export default function AdminDashboardPage() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.statCard}
             onPress={() => router.push('/admin/establishments' as any)}
           >
@@ -485,7 +485,7 @@ export default function AdminDashboardPage() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.statCard}
             onPress={() => router.push('/admin/events?filter=all' as any)}
           >
@@ -500,7 +500,7 @@ export default function AdminDashboardPage() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.statCard}
             onPress={() => router.push('/admin/events?filter=today' as any)}
           >
@@ -515,7 +515,7 @@ export default function AdminDashboardPage() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.statCard}
             onPress={() => router.push('/admin/events?filter=pending' as any)}
           >
@@ -525,15 +525,15 @@ export default function AdminDashboardPage() {
                 <AlertTriangle size={20} color={currentTheme.warning} />
               </View>
               <Text style={styles.statValue} numberOfLines={2}>
-                {Array.isArray(dashboardData?.pedingEvents) 
-                  ? dashboardData.pedingEvents.length.toString() 
+                {Array.isArray(dashboardData?.pedingEvents)
+                  ? dashboardData.pedingEvents.length.toString()
                   : '0'
                 }
               </Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.statCard}
             onPress={() => router.push('/admin/events?filter=month' as any)}
           >
@@ -552,7 +552,7 @@ export default function AdminDashboardPage() {
         <View style={styles.card}>
           <View style={styles.cardHeader}>
             <Text style={styles.cardTitle}>Eventos de Hoje</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.viewAllButton}
               onPress={() => router.push('/admin/events?filter=today' as any)}
             >
@@ -574,4 +574,4 @@ export default function AdminDashboardPage() {
       </ScrollView>
     </SafeAreaView>
   );
-} 
+}

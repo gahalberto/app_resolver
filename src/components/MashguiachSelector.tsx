@@ -38,21 +38,21 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
   onAcceptedChange
 }) => {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [availableMashguiachim, setAvailableMashguiachim] = useState<Mashguiach[]>([]);
+  const [availableMashguichim, setAvailableMashguichim] = useState<Mashguiach[]>([]);
   const [loading, setLoading] = useState(false);
   const [canSelect, setCanSelect] = useState(false);
 
   useEffect(() => {
     setCanSelect(!!startDateTime && !!endDateTime);
-    
+
     if (startDateTime && endDateTime && isDropdownVisible) {
-      fetchAvailableMashguiachim();
+      fetchAvailableMashguichim();
     }
   }, [startDateTime, endDateTime, isDropdownVisible]);
 
-  const fetchAvailableMashguiachim = async () => {
+  const fetchAvailableMashguichim = async () => {
     if (!startDateTime || !endDateTime || !token) return;
-    
+
     try {
       setLoading(true);
       const response = await api.get('/admin/getMashguichimAvalaible', {
@@ -64,13 +64,13 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
           endDateTime
         }
       });
-      
+
       if (response.data && Array.isArray(response.data.data)) {
-        setAvailableMashguiachim(response.data.data);
+        setAvailableMashguichim(response.data.data);
       }
     } catch (err) {
-      console.error("Erro ao buscar mashguiachim disponíveis:", err);
-      Alert.alert("Erro", "Não foi possível carregar os mashguiachim disponíveis");
+      console.error("Erro ao buscar mashguichim disponíveis:", err);
+      Alert.alert("Erro", "Não foi possível carregar os mashguichim disponíveis");
     } finally {
       setLoading(false);
     }
@@ -78,18 +78,18 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
 
   const getSelectedMashguiachName = () => {
     if (!value) return "Selecione um mashguiach";
-    
+
     if (value === 'random') return "Aleatório";
-    
-    const selectedMashguiach = availableMashguiachim.find(m => m.id === value);
+
+    const selectedMashguiach = availableMashguichim.find(m => m.id === value);
     if (selectedMashguiach) return selectedMashguiach.name;
-    
+
     // Se o mashguiach selecionado não estiver na lista de disponíveis
     // (pode acontecer se ele for o atualmente atribuído e não estiver disponível agora)
     if (currentMashguiach && currentMashguiach.id === value) {
       return currentMashguiach.name + " (atual)";
     }
-    
+
     return "Mashguiach não encontrado";
   };
 
@@ -99,7 +99,7 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
     } else {
       Alert.alert(
         "Atenção",
-        "Por favor, selecione primeiro os horários de início e término para verificar os Mashguiachim disponíveis."
+        "Por favor, selecione primeiro os horários de início e término para verificar os Mashguichim disponíveis."
       );
     }
   };
@@ -109,7 +109,7 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
       <Text style={[styles.label, { color: theme.textSecondary }]}>{label}</Text>
       <TouchableOpacity
         style={[
-          styles.button, 
+          styles.button,
           { backgroundColor: theme.surface },
           !canSelect && styles.disabledButton
         ]}
@@ -117,9 +117,9 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
       >
         <View style={styles.buttonContent}>
           <User size={20} color={canSelect ? theme.primary : theme.textSecondary} />
-          <Text 
+          <Text
             style={[
-              styles.buttonText, 
+              styles.buttonText,
               { color: theme.text },
               value && { color: theme.primary, fontWeight: 'bold' }
             ]}
@@ -129,17 +129,17 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
         </View>
         <ChevronDown size={20} color={canSelect ? theme.primary : theme.textSecondary} />
       </TouchableOpacity>
-      
+
       {isDropdownVisible && (
         <View style={[styles.dropdown, { backgroundColor: theme.surface, borderColor: theme.surfaceLight }]}>
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color={theme.primary} />
               <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
-                Buscando Mashguiachim disponíveis...
+                Buscando Mashguichim disponíveis...
               </Text>
             </View>
-          ) : availableMashguiachim.length > 0 ? (
+          ) : availableMashguichim.length > 0 ? (
             <ScrollView style={styles.dropdownList} nestedScrollEnabled={true}>
               <TouchableOpacity
                 key="random"
@@ -154,11 +154,11 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
                 }}
               >
                 <View style={styles.dropdownItemContent}>
-                  <Shuffle 
-                    size={16} 
-                    color={value === 'random' ? '#FFF' : theme.textSecondary} 
+                  <Shuffle
+                    size={16}
+                    color={value === 'random' ? '#FFF' : theme.textSecondary}
                   />
-                  <Text 
+                  <Text
                     style={[
                       styles.dropdownItemText,
                       { color: theme.text },
@@ -172,7 +172,7 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
                   <CheckCircle size={16} color="#FFF" />
                 )}
               </TouchableOpacity>
-              {availableMashguiachim.map((mashguiach) => (
+              {availableMashguichim.map((mashguiach) => (
                 <TouchableOpacity
                   key={mashguiach.id}
                   style={[
@@ -186,11 +186,11 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
                   }}
                 >
                   <View style={styles.dropdownItemContent}>
-                    <User 
-                      size={16} 
-                      color={value === mashguiach.id ? '#FFF' : theme.textSecondary} 
+                    <User
+                      size={16}
+                      color={value === mashguiach.id ? '#FFF' : theme.textSecondary}
                     />
-                    <Text 
+                    <Text
                       style={[
                         styles.dropdownItemText,
                         { color: theme.text },
@@ -331,4 +331,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MashguiachSelector; 
+export default MashguiachSelector;

@@ -16,7 +16,7 @@ import axios from "axios";
 // Configuração da API com timeout para evitar esperas longas
 export const api = axios.create({
   // Usando a URL de produção por padrão
-  baseURL: "http://192.168.0.11:3000/api",
+  baseURL: "http://192.168.0.26:3000/api",
   // Adicionando timeout de 10 segundos para evitar esperas longas
   timeout: 10000,
   // Configurações adicionais para melhorar o desempenho
