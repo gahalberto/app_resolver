@@ -13,8 +13,8 @@ interface User {
   id: string;
   name: string;
   email: string;
-  token: string;
-  roleId: string;
+  token: string;  // Usamos token internamente, mesmo que a API retorne como authToken
+  roleId: string; // Garantimos que roleId seja tratado como string
 }
 
 interface RegisterProps {
@@ -42,10 +42,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const loadUser = async () => {
       const storedUser = await userStorage.get();
       if (storedUser) {
+        // Garantir que o roleId seja uma string
+        if (typeof storedUser.roleId !== 'string') {
+          storedUser.roleId = storedUser.roleId.toString();
+        }
+        
         setUser(storedUser);
         api.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${storedUser.token}`;
+        
+        console.log("Usuário carregado do storage:", storedUser);
       }
       setIsLoading(false);
     };
@@ -56,17 +63,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post("/login", { email, password });
+      console.log("Resposta do login:", response.data);
+      
+      // Extrair dados da resposta
       const { user, token } = response.data;
+      
+      // Verificar se o token está no objeto user como authToken
+      const userToken = token || user.authToken;
+      
+      if (!userToken) {
+        throw new Error("Token não encontrado na resposta");
+      }
 
-      const userData = { ...user, token };
+      const userData = { 
+        ...user, 
+        token: userToken, // Garantir que o token esteja no formato esperado
+        roleId: user.roleId.toString() // Garantir que roleId seja string
+      };
+      
       setUser(userData);
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      api.defaults.headers.common["Authorization"] = `Bearer ${userToken}`;
       await userStorage.save(userData);
 
       console.log("Login roleId:", userData.roleId);
       
       // Redirecionar com base no roleId
-      if (userData.roleId == 3) {
+      if (userData.roleId == "3") {
         console.log("Redirecionando para /admin");
         router.push("/admin" as any);
       } else {
@@ -88,12 +110,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
-
+      
+      console.log("Resposta do registro:", response.data);
+      
       const { user, token } = response.data;
+      
+      // Verificar se o token está no objeto user como authToken
+      const userToken = token || user.authToken;
+      
+      if (!userToken) {
+        throw new Error("Token não encontrado na resposta");
+      }
 
-      const userData = { ...user, token };
+      const userData = { 
+        ...user, 
+        token: userToken, // Garantir que o token esteja no formato esperado
+        roleId: user.roleId.toString() // Garantir que roleId seja string
+      };
+      
       setUser(userData);
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      api.defaults.headers.common["Authorization"] = `Bearer ${userToken}`;
       await userStorage.save(userData);
 
       router.push("/mashguiach");

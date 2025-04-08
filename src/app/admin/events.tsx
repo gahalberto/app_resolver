@@ -7,7 +7,7 @@ import { Header } from "@/components/Header";
 import { useState, useEffect, useCallback } from "react";
 import { api } from "@/server/api";
 import { useUser } from "@/contexts/UserContext";
-import { Calendar, Search, ChevronLeft, MapPin, Clock, User, Users, Tag, CheckCircle, XCircle, Filter, CalendarClock, AlertTriangle, X, Save } from "lucide-react-native";
+import { Calendar, Search, ChevronLeft, MapPin, Clock, User, Users, Tag, CheckCircle, XCircle, Filter, CalendarClock, AlertTriangle, X, Save, CalendarPlus, CalendarCheck } from "lucide-react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { format, parseISO, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -106,6 +106,9 @@ export default function EventsPage() {
 
   const getFilterParams = () => {
     const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
     const params: any = {
       page,
       limit,
@@ -120,6 +123,12 @@ export default function EventsPage() {
       case 'month':
         params.startDate = startOfMonth(today).toISOString();
         params.endDate = endOfMonth(today).toISOString();
+        break;
+      case 'upcoming':
+        params.startDate = startOfDay(today).toISOString();
+        break;
+      case 'from_today':
+        params.startDate = startOfDay(tomorrow).toISOString();
         break;
       case 'pending':
         params.status = 'pending';
@@ -245,6 +254,10 @@ export default function EventsPage() {
         return 'Eventos de Hoje';
       case 'month':
         return 'Eventos do Mês';
+      case 'upcoming':
+        return 'Próximos Eventos';
+      case 'from_today':
+        return 'Eventos a Partir de Amanhã';
       case 'pending':
         return 'Eventos Pendentes';
       case 'approved':
@@ -440,6 +453,11 @@ export default function EventsPage() {
       borderRadius: 8,
       padding: 8,
       marginBottom: 8,
+    },
+    serviceDate: {
+      fontSize: 13,
+      color: '#FFFFFF',
+      marginBottom: 4,
     },
     serviceTime: {
       fontSize: 13,
@@ -655,8 +673,13 @@ export default function EventsPage() {
             Serviços ({item.EventsServices.length})
           </Text>
           
-          {item.EventsServices.slice(0, 2).map((service, index) => (
-            <View key={service.id} style={styles.serviceItem}>
+          {item.EventsServices
+            .sort((a, b) => new Date(a.arriveMashguiachTime).getTime() - new Date(b.arriveMashguiachTime).getTime())
+            .slice(0, 2).map((service, index) => (
+            <View key={`service-${service.id}-${index}`} style={styles.serviceItem}>
+              <Text style={styles.serviceDate}>
+                <CalendarClock size={14} color="#FFFFFF" /> {formatDate(service.arriveMashguiachTime)}
+              </Text>
               <Text style={styles.serviceTime}>
                 <Clock size={14} color="#FFFFFF" /> {formatTime(service.arriveMashguiachTime)} - {formatTime(service.endMashguiachTime)}
               </Text>
@@ -741,6 +764,28 @@ export default function EventsPage() {
           <TouchableOpacity
             style={[
               styles.filterButton,
+              activeFilter === 'upcoming' ? styles.filterButtonActive : styles.filterButtonInactive
+            ]}
+            onPress={() => handleFilterChange('upcoming')}
+          >
+            <CalendarPlus size={16} color="#FFFFFF" />
+            <Text style={styles.filterText}>Próximos</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              activeFilter === 'from_today' ? styles.filterButtonActive : styles.filterButtonInactive
+            ]}
+            onPress={() => handleFilterChange('from_today')}
+          >
+            <CalendarCheck size={16} color="#FFFFFF" />
+            <Text style={styles.filterText}>A partir de amanhã</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
               activeFilter === 'month' ? styles.filterButtonActive : styles.filterButtonInactive
             ]}
             onPress={() => handleFilterChange('month')}
@@ -802,7 +847,7 @@ export default function EventsPage() {
             <FlatList
               data={events}
               renderItem={renderItem}
-              keyExtractor={item => item.id}
+              keyExtractor={item => `event-${item.id}-${Math.random().toString(36).substring(7)}`}
               style={styles.listContainer}
               showsVerticalScrollIndicator={false}
               onEndReached={handleLoadMore}

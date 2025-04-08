@@ -73,6 +73,7 @@ interface DashboardData {
   eventsCount: number;
   todayEventsCount: number;
   pedingEvents: any[];
+  monthEventsCount: number;
   monthEvents: number;
   todayEvents: TodayEvent[];
 }
@@ -271,7 +272,7 @@ export default function AdminDashboardPage() {
         storeCount: response.data?.storeCount || 0,
         eventsCount: response.data?.eventsCount || 0,
         todayEventsCount: response.data?.todayEventsCount || 0,
-        monthEvents: response.data?.monthEvents || 0,
+        monthEventsCount: response.data?.monthEventsCount || 0,
         pedingEvents: Array.isArray(response.data?.pedingEvents) ? response.data.pedingEvents : [],
         todayEvents: Array.isArray(response.data?.todayEvents) ? response.data.todayEvents : []
       };
@@ -543,7 +544,7 @@ export default function AdminDashboardPage() {
                 <CalendarClock size={20} color={currentTheme.primary} />
               </View>
               <Text style={styles.statValue} numberOfLines={2}>
-                {dashboardData?.monthEvents?.toString() || '0'}
+                {dashboardData?.monthEventsCount?.toString() || '0'}
               </Text>
             </View>
           </TouchableOpacity>

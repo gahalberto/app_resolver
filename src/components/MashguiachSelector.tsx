@@ -55,6 +55,7 @@ const MashguiachSelector: React.FC<MashguiachSelectorProps> = ({
 
     try {
       setLoading(true);
+      console.log("Usando token para buscar mashguichim:", token);
       const response = await api.get('/admin/getMashguichimAvalaible', {
         headers: {
           Authorization: `Bearer ${token}`

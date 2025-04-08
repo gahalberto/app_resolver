@@ -9,12 +9,12 @@ import { FileText, Share2 } from 'lucide-react-native';
 import { useTheme } from '@/contexts/ThemeContext';
 import { themes } from '@/styles/themes';
 
-interface FixedJobReportButtonProps {
+interface FreelancerJobReportButtonProps {
   onSuccess?: () => void;
   onError?: (error: Error) => void;
 }
 
-export const FixedJobReportButton: React.FC<FixedJobReportButtonProps> = ({
+export const FreelancerJobReportButton: React.FC<FreelancerJobReportButtonProps> = ({
   onSuccess,
   onError,
 }) => {
@@ -37,7 +37,7 @@ export const FixedJobReportButton: React.FC<FixedJobReportButtonProps> = ({
       const month = getMonth(selectedDate) + 1; // getMonth retorna 0-11
       const year = getYear(selectedDate);
 
-      const filePath = await reportService.generateFixedJobReport({
+      const filePath = await reportService.generateFreelancerJobReport({
         userId: user.id,
         month,
         year,
@@ -83,12 +83,12 @@ export const FixedJobReportButton: React.FC<FixedJobReportButtonProps> = ({
         <View style={styles.cardHeader}>
           <FileText size={24} color={currentTheme.primary} />
           <Text style={[styles.cardTitle, { color: currentTheme.text }]}>
-            Relatório de Trabalho Fixo
+            Relatório de Trabalho Freelancer
           </Text>
         </View>
         
         <Text style={[styles.cardDescription, { color: currentTheme.textSecondary }]}>
-          Gere um relatório detalhado dos seus trabalhos fixos para o mês selecionado.
+          Gere um relatório detalhado dos seus trabalhos freelancer para o mês selecionado.
         </Text>
         
         <TouchableOpacity

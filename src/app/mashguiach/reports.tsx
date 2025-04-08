@@ -33,6 +33,8 @@ import {
   Share2
 } from "lucide-react-native";
 import { FixedJobReportButton } from "@/components/FixedJobReportButton";
+import { FreelancerJobReportButton } from "@/components/FreelancerJobReportButton";
+import { ReportSelector } from "@/components/ReportSelector";
 
 // Interface para o Mashguiach
 interface Mashguiach {
@@ -673,6 +675,9 @@ export default function ReportsPage() {
       marginTop: 10,
       fontSize: 16,
     },
+    reportsSection: {
+      marginBottom: 24,
+    },
   });
   
   return (
@@ -917,27 +922,22 @@ export default function ReportsPage() {
           style={styles.content}
           contentContainerStyle={styles.contentContainer}
         >
-          <View style={styles.section}>
+          <View style={styles.reportsSection}>
             <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
-              Relatório de Trabalho Fixo
-            </Text>
-            <Text style={[styles.sectionDescription, { color: currentTheme.textSecondary }]}>
-              Gere um relatório detalhado do seu trabalho fixo em estabelecimentos, incluindo horas trabalhadas e valores.
+              Gerar Relatórios
             </Text>
             
-            <FixedJobReportButton />
+            <ReportSelector />
             
             <View style={styles.infoCard}>
               <FileText size={24} color={currentTheme.primary} />
               <View style={styles.infoCardContent}>
                 <Text style={[styles.infoCardTitle, { color: currentTheme.text }]}>
-                  O que contém neste relatório?
+                  Sobre os Relatórios
                 </Text>
                 <Text style={[styles.infoCardText, { color: currentTheme.textSecondary }]}>
-                  • Informações do mashguiach{'\n'}
-                  • Resumo por estabelecimento{'\n'}
-                  • Detalhes dos dias trabalhados{'\n'}
-                  • Total de horas e valores
+                  Os relatórios são gerados em formato PDF e podem ser compartilhados ou salvos no seu dispositivo. 
+                  Escolha o tipo de relatório e o mês desejado para gerar um relatório detalhado das suas atividades.
                 </Text>
               </View>
             </View>

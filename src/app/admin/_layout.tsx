@@ -16,7 +16,9 @@ import {
   LogOut,
   Sun,
   Moon,
-  CalendarClock
+  CalendarClock,
+  Briefcase,
+  FileText
 } from "lucide-react-native";
 import { router } from "expo-router";
 
@@ -47,9 +49,19 @@ function AdminDrawerContent(props: any) {
       route: "/admin/events",
     },
     {
+      label: "Serviços",
+      icon: Briefcase,
+      route: "/admin/services",
+    },
+    {
       label: "Mashguichim",
       icon: Users,
       route: "/admin/mashguichim",
+    },
+    {
+      label: "Relatórios",
+      icon: FileText,
+      route: "/admin/reports/fixed-job",
     },
     {
       label: "Usuários",

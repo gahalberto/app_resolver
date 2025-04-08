@@ -46,6 +46,8 @@ interface EventService {
   address_neighbor: string;
   transport_price: number;
   mashguiachPricePerHour: number;
+  dayHourValue?: number;
+  nightHourValue?: number;
   Mashguiach?: Mashguiach;
   latitude?: number | null;
   longitude?: number | null;
@@ -125,6 +127,19 @@ export default function EventEditPage() {
   const [showWorkTypeDropdown, setShowWorkTypeDropdown] = useState(false);
   const [loadingMashguichim, setLoadingMashguichim] = useState(false);
   const [canSelectMashguiach, setCanSelectMashguiach] = useState(false);
+  const [calculatedHours, setCalculatedHours] = useState<{
+    dayHours: number;
+    nightHours: number;
+    dayValue: number;
+    nightValue: number;
+    totalValue: number;
+  }>({
+    dayHours: 0,
+    nightHours: 0,
+    dayValue: 0,
+    nightValue: 0,
+    totalValue: 0
+  });
 
   useEffect(() => {
     if (id) {
@@ -248,10 +263,21 @@ export default function EventEditPage() {
       ...service,
       arriveMashguiachTime: service.arriveMashguiachTime || new Date().toISOString(),
       endMashguiachTime: service.endMashguiachTime || new Date().toISOString(),
+      dayHourValue: service.dayHourValue || 50,
+      nightHourValue: service.nightHourValue || 75,
+      transport_price: service.transport_price || 0
     });
     setServiceModalVisible(true);
     setShowMashguiachDropdown(false);
     setCanSelectMashguiach(!!service.arriveMashguiachTime && !!service.endMashguiachTime);
+    
+    // Calcular horas e valores
+    calculateServiceHours(
+      service.arriveMashguiachTime || new Date().toISOString(),
+      service.endMashguiachTime || new Date().toISOString(),
+      service.dayHourValue || 50,
+      service.nightHourValue || 75
+    );
   };
 
   const closeServiceModal = () => {
@@ -270,6 +296,16 @@ export default function EventEditPage() {
       ...prev,
       [field]: value
     }));
+
+    // Recalcular preço se os valores de hora ou horários forem alterados
+    if (field === 'dayHourValue' || field === 'nightHourValue') {
+      calculateServiceHours(
+        editedService.arriveMashguiachTime || new Date().toISOString(),
+        editedService.endMashguiachTime || new Date().toISOString(),
+        field === 'dayHourValue' ? value : editedService.dayHourValue || 50,
+        field === 'nightHourValue' ? value : editedService.nightHourValue || 75
+      );
+    }
   };
 
   const handleServiceSave = async () => {
@@ -306,39 +342,37 @@ export default function EventEditPage() {
     }
   };
 
-  const onStartDateChange = (selectedDate: Date) => {
+  const onStartDateChange = (date: Date) => {
+    const isoDate = date.toISOString();
+    handleServiceInputChange('arriveMashguiachTime', isoDate);
     setShowStartDatePicker(false);
-    if (selectedDate) {
-      const formattedDate = selectedDate.toISOString();
-      setEditedService(prev => ({
-        ...prev,
-        arriveMashguiachTime: formattedDate
-      }));
-
-      // Verificar se ambas as datas estão selecionadas para habilitar a seleção de mashguichim
-      if (editedService.endMashguiachTime) {
-        setCanSelectMashguiach(true);
-        // Buscar mashguichim disponíveis com as novas datas
-        fetchAvailableMashguichim(formattedDate, editedService.endMashguiachTime);
-      }
+    setCanSelectMashguiach(!!isoDate && !!editedService.endMashguiachTime);
+    
+    // Recalcular preço se os horários forem alterados
+    if (editedService.endMashguiachTime) {
+      calculateServiceHours(
+        isoDate,
+        editedService.endMashguiachTime,
+        editedService.dayHourValue || 50,
+        editedService.nightHourValue || 75
+      );
     }
   };
 
-  const onEndDateChange = (selectedDate: Date) => {
+  const onEndDateChange = (date: Date) => {
+    const isoDate = date.toISOString();
+    handleServiceInputChange('endMashguiachTime', isoDate);
     setShowEndDatePicker(false);
-    if (selectedDate) {
-      const formattedDate = selectedDate.toISOString();
-      setEditedService(prev => ({
-        ...prev,
-        endMashguiachTime: formattedDate
-      }));
-
-      // Verificar se ambas as datas estão selecionadas para habilitar a seleção de mashguichim
-      if (editedService.arriveMashguiachTime) {
-        setCanSelectMashguiach(true);
-        // Buscar mashguichim disponíveis com as novas datas
-        fetchAvailableMashguichim(editedService.arriveMashguiachTime, formattedDate);
-      }
+    setCanSelectMashguiach(!!editedService.arriveMashguiachTime && !!isoDate);
+    
+    // Recalcular preço se os horários forem alterados
+    if (editedService.arriveMashguiachTime) {
+      calculateServiceHours(
+        editedService.arriveMashguiachTime,
+        isoDate,
+        editedService.dayHourValue || 50,
+        editedService.nightHourValue || 75
+      );
     }
   };
 
@@ -380,6 +414,15 @@ export default function EventEditPage() {
   };
 
   const formatDate = (dateString: string) => {
+    try {
+      const date = parseISO(dateString);
+      return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  const formatFullDate = (dateString: string) => {
     try {
       const date = parseISO(dateString);
       return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -454,6 +497,13 @@ export default function EventEditPage() {
         >
           <Edit size={18} color={currentTheme.primary} />
         </TouchableOpacity>
+      </View>
+
+      <View style={styles.serviceInfo}>
+        <CalendarIcon size={16} color="#FFFFFF" />
+        <Text style={styles.serviceInfoText}>
+          {formatDate(item.arriveMashguiachTime)}
+        </Text>
       </View>
 
       <View style={styles.serviceInfo}>
@@ -739,6 +789,66 @@ export default function EventEditPage() {
       height: 100,
       textAlignVertical: 'top',
     },
+    sectionContainer: {
+      marginBottom: 20,
+    },
+    serviceSectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: '#FFFFFF',
+      marginBottom: 8,
+    },
+    sectionDescription: {
+      fontSize: 14,
+      color: '#A0A0B2',
+      marginBottom: 16,
+      lineHeight: 20,
+    },
+    rowContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    calculationContainer: {
+      backgroundColor: 'rgba(130, 87, 229, 0.1)',
+      borderRadius: 8,
+      padding: 16,
+      marginBottom: 20,
+    },
+    calculationTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#FFFFFF',
+      marginBottom: 12,
+    },
+    calculationRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+    },
+    calculationLabel: {
+      fontSize: 14,
+      color: '#A0A0B2',
+    },
+    calculationValue: {
+      fontSize: 14,
+      color: '#FFFFFF',
+      fontWeight: '500',
+    },
+    calculationTotal: {
+      fontSize: 16,
+      color: '#FFFFFF',
+      fontWeight: '600',
+    },
+    calculationTotalValue: {
+      fontSize: 16,
+      color: '#8257E5',
+      fontWeight: '600',
+    },
+    calculationDivider: {
+      height: 1,
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+      marginVertical: 12,
+    },
   });
 
   // Função para voltar à tela anterior
@@ -747,7 +857,96 @@ export default function EventEditPage() {
       navigation.goBack();
     } else {
       // Fallback para a página de eventos se não puder voltar
-      router.push('/admin/events' as any);
+      router.push('/admin/events');
+    }
+  };
+
+  // Função para calcular horas diurnas e noturnas
+  const calculateServiceHours = (startTime: string, endTime: string, dayRate: number, nightRate: number) => {
+    try {
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      
+      // Verificar se as datas são válidas
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        console.error("Datas inválidas:", { startTime, endTime });
+        return;
+      }
+      
+      // Se a data de término for anterior à data de início, retornar
+      if (end <= start) {
+        console.error("Data de término anterior à data de início");
+        setCalculatedHours({
+          dayHours: 0,
+          nightHours: 0,
+          dayValue: 0,
+          nightValue: 0,
+          totalValue: 0
+        });
+        return;
+      }
+      
+      let dayHours = 0;
+      let nightHours = 0;
+      
+      // Calcular a diferença em milissegundos
+      const diffMs = end.getTime() - start.getTime();
+      
+      // Converter para horas
+      const totalHours = diffMs / (1000 * 60 * 60);
+      
+      // Dividir em intervalos de 15 minutos para maior precisão
+      const intervalMs = 15 * 60 * 1000; // 15 minutos em milissegundos
+      const intervals = Math.floor(diffMs / intervalMs);
+      
+      // Para cada intervalo, verificar se é diurno ou noturno
+      for (let i = 0; i < intervals; i++) {
+        const currentTime = new Date(start.getTime() + i * intervalMs);
+        const hours = currentTime.getHours();
+        
+        // Horário diurno: 6h às 22h
+        // Horário noturno: 22h às 6h
+        if (hours >= 6 && hours < 22) {
+          dayHours += 0.25; // 15 minutos = 0.25 horas
+        } else {
+          nightHours += 0.25;
+        }
+      }
+      
+      // Arredondar para 2 casas decimais
+      dayHours = Math.round(dayHours * 100) / 100;
+      nightHours = Math.round(nightHours * 100) / 100;
+      
+      // Calcular valores
+      const dayValue = dayHours * dayRate;
+      const nightValue = nightHours * nightRate;
+      const totalValue = dayValue + nightValue;
+      
+      // Atualizar estado
+      setCalculatedHours({
+        dayHours,
+        nightHours,
+        dayValue,
+        nightValue,
+        totalValue
+      });
+      
+      // Atualizar o preço total no formulário
+      handleServiceInputChange('mashguiachPrice', totalValue);
+      
+      console.log("Cálculo de horas:", {
+        start: start.toLocaleString(),
+        end: end.toLocaleString(),
+        dayHours,
+        nightHours,
+        dayRate,
+        nightRate,
+        dayValue,
+        nightValue,
+        totalValue
+      });
+    } catch (error) {
+      console.error("Erro ao calcular horas:", error);
     }
   };
 
@@ -769,7 +968,7 @@ export default function EventEditPage() {
       <ScrollView style={styles.content}>
         <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
           <ChevronLeft size={20} color={currentTheme.primary} />
-          <Text style={styles.backButtonText}>Voltar</Text>
+          <Text style={styles.backButtonText}>Voltar para a lista</Text>
         </TouchableOpacity>
 
         {error ? (
@@ -890,11 +1089,13 @@ export default function EventEditPage() {
               )}
             </TouchableOpacity>
 
-            <Text style={styles.sectionTitle}>Serviços do Evento</Text>
+            <Text style={styles.serviceSectionTitle}>Serviços do Evento</Text>
 
             {event && event.EventsServices && event.EventsServices.length > 0 ? (
               <FlatList
-                data={event.EventsServices}
+                data={event.EventsServices.sort((a, b) => 
+                  new Date(a.arriveMashguiachTime).getTime() - new Date(b.arriveMashguiachTime).getTime()
+                )}
                 renderItem={renderServiceItem}
                 keyExtractor={item => item.id}
                 scrollEnabled={false}
@@ -1020,6 +1221,88 @@ export default function EventEditPage() {
                 token={user?.token || null}
               />
 
+              {/* Seção de Valores por Hora */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.serviceSectionTitle}>Valores por Hora</Text>
+                <Text style={styles.sectionDescription}>
+                  O valor do serviço será calculado de acordo com o horário:
+                  {'\n'}• Das 6h às 22h: Valor diurno
+                  {'\n'}• Das 22h às 6h: Valor noturno
+                </Text>
+                
+                <View style={styles.rowContainer}>
+                  <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
+                    <Text style={styles.label}>Valor Hora Diurna (R$)</Text>
+                    <View style={styles.inputWithIcon}>
+                      <DollarSign size={20} color={currentTheme.textSecondary} />
+                      <TextInput
+                        style={styles.input}
+                        value={
+                          editedService.dayHourValue !== undefined
+                            ? editedService.dayHourValue.toString()
+                            : '50'
+                        }
+                        onChangeText={(text) => handleServiceInputChange('dayHourValue', parseFloat(text) || 50)}
+                        keyboardType="numeric"
+                        placeholder="50"
+                        placeholderTextColor={currentTheme.textSecondary}
+                      />
+                    </View>
+                  </View>
+                  
+                  <View style={[styles.formGroup, { flex: 1, marginLeft: 8 }]}>
+                    <Text style={styles.label}>Valor Hora Noturna (R$)</Text>
+                    <View style={styles.inputWithIcon}>
+                      <DollarSign size={20} color={currentTheme.textSecondary} />
+                      <TextInput
+                        style={styles.input}
+                        value={
+                          editedService.nightHourValue !== undefined
+                            ? editedService.nightHourValue.toString()
+                            : '75'
+                        }
+                        onChangeText={(text) => handleServiceInputChange('nightHourValue', parseFloat(text) || 75)}
+                        keyboardType="numeric"
+                        placeholder="75"
+                        placeholderTextColor={currentTheme.textSecondary}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Seção de Cálculo de Preço */}
+              <View style={styles.calculationContainer}>
+                <Text style={styles.calculationTitle}>Cálculo de Preço</Text>
+                
+                <View style={styles.calculationRow}>
+                  <Text style={styles.calculationLabel}>Horas Diurnas:</Text>
+                  <Text style={styles.calculationValue}>{calculatedHours.dayHours.toFixed(2)}h</Text>
+                </View>
+                
+                <View style={styles.calculationRow}>
+                  <Text style={styles.calculationLabel}>Horas Noturnas:</Text>
+                  <Text style={styles.calculationValue}>{calculatedHours.nightHours.toFixed(2)}h</Text>
+                </View>
+                
+                <View style={styles.calculationRow}>
+                  <Text style={styles.calculationLabel}>Valor Diurno:</Text>
+                  <Text style={styles.calculationValue}>R$ {calculatedHours.dayValue.toFixed(2)}</Text>
+                </View>
+                
+                <View style={styles.calculationRow}>
+                  <Text style={styles.calculationLabel}>Valor Noturno:</Text>
+                  <Text style={styles.calculationValue}>R$ {calculatedHours.nightValue.toFixed(2)}</Text>
+                </View>
+                
+                <View style={styles.calculationDivider} />
+                
+                <View style={styles.calculationRow}>
+                  <Text style={styles.calculationTotal}>Valor Total:</Text>
+                  <Text style={styles.calculationTotalValue}>R$ {calculatedHours.totalValue.toFixed(2)}</Text>
+                </View>
+              </View>
+
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Preço do Serviço (R$)</Text>
                 <View style={styles.inputWithIcon}>
@@ -1034,6 +1317,25 @@ export default function EventEditPage() {
                     onChangeText={(text) => handleServiceInputChange('mashguiachPrice', parseFloat(text) || 0)}
                     keyboardType="numeric"
                     placeholder="Valor do serviço"
+                    placeholderTextColor={currentTheme.textSecondary}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Valor do Transporte (R$)</Text>
+                <View style={styles.inputWithIcon}>
+                  <DollarSign size={20} color={currentTheme.textSecondary} />
+                  <TextInput
+                    style={styles.input}
+                    value={
+                      editedService.transport_price !== undefined
+                        ? editedService.transport_price.toString()
+                        : '0'
+                    }
+                    onChangeText={(text) => handleServiceInputChange('transport_price', parseFloat(text) || 0)}
+                    keyboardType="numeric"
+                    placeholder="Valor do transporte"
                     placeholderTextColor={currentTheme.textSecondary}
                   />
                 </View>

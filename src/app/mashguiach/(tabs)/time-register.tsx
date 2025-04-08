@@ -95,12 +95,47 @@ export default function TimeRegisterPage() {
     }
   };
 
+  // Verifica se a entrada aberta é de um dia diferente
+  const isEntryFromDifferentDay = () => {
+    if (!timeEntryStatus || !timeEntryStatus.lastEntry || !timeEntryStatus.lastEntry.entrace) {
+      return false;
+    }
+
+    const entryDate = new Date(timeEntryStatus.lastEntry.entrace);
+    const today = new Date();
+    
+    return entryDate.getDate() !== today.getDate() || 
+           entryDate.getMonth() !== today.getMonth() || 
+           entryDate.getFullYear() !== today.getFullYear();
+  };
+
   const handleRegisterEntry = async () => {
     if (!user) return;
     
     try {
       setIsRegistering(true);
       console.log('Registrando entrada para trabalho fixo');
+      
+      // Verificar se existe uma entrada aberta de um dia diferente
+      const hasPreviousDayOpenEntry = isEntryFromDifferentDay() && timeEntryStatus?.status?.hasOpenEntry;
+      
+      // Se existir uma entrada aberta de dia anterior, fechar antes
+      if (hasPreviousDayOpenEntry) {
+        console.log('Fechando entrada anterior não finalizada do dia', 
+          new Date(timeEntryStatus?.lastEntry?.entrace).toLocaleDateString('pt-BR'));
+        
+        const timestamp = new Date().getTime();
+        
+        // Registrar saída automática para a entrada anterior
+        const closeResponse = await api.post('/time-entries', {
+          userId: user.id,
+          type: "SAIDA",
+          autoClose: true, // Flag para indicar fechamento automático
+          _t: timestamp
+        });
+        
+        console.log('Resposta do fechamento automático:', closeResponse.data);
+      }
       
       // Solicitar permissão de localização
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -306,13 +341,15 @@ export default function TimeRegisterPage() {
     // Obter status do usuário
     let hasOpenEntry = false;
     let isOnLunch = false;
+    let hasEntryFromDifferentDay = false;
     
     if (timeEntryStatus && timeEntryStatus.status) {
       hasOpenEntry = timeEntryStatus.status.hasOpenEntry || false;
       isOnLunch = timeEntryStatus.status.isOnLunch || false;
+      hasEntryFromDifferentDay = isEntryFromDifferentDay();
     }
     
-    console.log('Status do registro de ponto:', { hasOpenEntry, isOnLunch });
+    console.log('Status do registro de ponto:', { hasOpenEntry, isOnLunch, hasEntryFromDifferentDay });
 
     return (
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
@@ -345,9 +382,9 @@ export default function TimeRegisterPage() {
           </Text>
 
           <TouchableOpacity 
-            className={`flex-row items-center justify-center bg-bkGolden-300 p-3 rounded-md mb-3 ${hasOpenEntry ? 'opacity-50' : ''}`}
+            className={`flex-row items-center justify-center bg-bkGolden-300 p-3 rounded-md mb-3 ${hasOpenEntry && !hasEntryFromDifferentDay ? 'opacity-50' : ''}`}
             onPress={handleRegisterEntry}
-            disabled={isRegistering || hasOpenEntry}
+            disabled={isRegistering || (hasOpenEntry && !hasEntryFromDifferentDay)}
           >
             {isRegistering ? (
               <ActivityIndicator size="small" color="#232c59" />
@@ -355,7 +392,11 @@ export default function TimeRegisterPage() {
               <>
                 <LogIn size={20} color="#232c59" />
                 <Text className="text-bkblue-900 font-medium ml-2">
-                  {hasOpenEntry ? 'Entrada Registrada' : 'Registrar Entrada'}
+                  {hasOpenEntry && !hasEntryFromDifferentDay ? 
+                    'Entrada Registrada' : 
+                    hasEntryFromDifferentDay ? 
+                    'Registrar Nova Entrada (Dia Diferente)' : 
+                    'Registrar Entrada'}
                 </Text>
               </>
             )}
