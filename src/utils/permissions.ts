@@ -6,7 +6,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import * as Contacts from 'expo-contacts';
-import * as Calendar from 'expo-calendar';
 import * as LocalAuthentication from 'expo-local-authentication';
 
 /**
@@ -171,26 +170,6 @@ export const requestContactsPermission = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error('Erro ao solicitar permissão de contatos:', error);
-    return false;
-  }
-};
-
-/**
- * Solicita permissão para acessar o calendário
- * @returns {Promise<boolean>} - Retorna true se a permissão foi concedida
- */
-export const requestCalendarPermission = async (): Promise<boolean> => {
-  try {
-    const { status } = await Calendar.requestCalendarPermissionsAsync();
-    
-    if (status !== 'granted') {
-      Alert.alert('Permissão negada', 'Precisamos acessar seu calendário para esta funcionalidade.');
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Erro ao solicitar permissão de calendário:', error);
     return false;
   }
 };

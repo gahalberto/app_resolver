@@ -29,7 +29,8 @@ const loginSchema = z.object({
   email: z
     .string()
     .email("Digite um e-mail válido")
-    .min(1, "Email é obrigatório"),
+    .min(1, "Email é obrigatório")
+    .transform((value) => value.toLowerCase()),
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
 });
 

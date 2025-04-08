@@ -53,8 +53,6 @@
         "android.permission.ACCESS_MEDIA_LOCATION",
         "android.permission.READ_CONTACTS",
         "android.permission.WRITE_CONTACTS",
-        "android.permission.READ_CALENDAR",
-        "android.permission.WRITE_CALENDAR",
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ],
@@ -108,12 +106,6 @@
         "expo-contacts",
         {
           "contactsPermission": "Permitir que o Beit Yaakov acesse seus contatos para facilitar o compartilhamento."
-        }
-      ],
-      [
-        "expo-calendar",
-        {
-          "calendarPermission": "Permitir que o Beit Yaakov acesse seu calendário para agendar eventos."
         }
       ],
       "expo-sensors",

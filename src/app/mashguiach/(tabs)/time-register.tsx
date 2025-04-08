@@ -124,24 +124,88 @@ export default function TimeRegisterPage() {
         console.log('Fechando entrada anterior não finalizada do dia', 
           new Date(timeEntryStatus?.lastEntry?.entrace).toLocaleDateString('pt-BR'));
         
-        const timestamp = new Date().getTime();
-        
-        // Registrar saída automática para a entrada anterior
-        const closeResponse = await api.post('/time-entries', {
-          userId: user.id,
-          type: "SAIDA",
-          autoClose: true, // Flag para indicar fechamento automático
-          _t: timestamp
-        });
-        
-        console.log('Resposta do fechamento automático:', closeResponse.data);
+        try {
+          const timestamp = new Date().getTime();
+          const entryDate = new Date(timeEntryStatus?.lastEntry?.entrace);
+          const exitDate = new Date(entryDate);
+          
+          // Definir a saída como o final do dia de trabalho (18:00)
+          exitDate.setHours(18, 0, 0, 0);
+          
+          // Se a entrada foi registrada após às 18h, definir saída para 1 hora depois
+          if (entryDate.getHours() >= 18) {
+            exitDate.setTime(entryDate.getTime() + 3600000); // +1 hora em milissegundos
+          }
+          
+          // Registrar saída automática para a entrada anterior
+          const closeResponse = await api.post('/time-entries', {
+            userId: user.id,
+            type: "SAIDA",
+            autoClose: true, // Flag para indicar fechamento automático
+            entryId: timeEntryStatus?.lastEntry?.id, // ID da entrada a ser fechada
+            exitTime: exitDate.toISOString(), // Horário de saída sugerido
+            _t: timestamp
+          });
+          
+          console.log('Resposta do fechamento automático:', closeResponse.data);
+          
+          // Atualizar status após fechar entrada anterior
+          await checkUserStatus();
+          
+        } catch (error: any) {
+          console.error('Erro ao fechar entrada anterior:', error.response?.data || error);
+          
+          // Se não for possível fechar automaticamente, perguntar ao usuário
+          Alert.alert(
+            'Entrada Anterior Aberta',
+            'Existe uma entrada não finalizada do dia ' + 
+            new Date(timeEntryStatus?.lastEntry?.entrace).toLocaleDateString('pt-BR') + 
+            '. Deseja registrar uma nova entrada mesmo assim?',
+            [
+              {
+                text: 'Cancelar',
+                style: 'cancel',
+                onPress: () => {
+                  setIsRegistering(false);
+                }
+              },
+              {
+                text: 'Continuar',
+                onPress: async () => {
+                  // Continua com o registro de nova entrada mesmo com erro no fechamento
+                  try {
+                    await registerNewEntry(user);
+                  } catch (registerError) {
+                    // Erro já é tratado dentro da função registerNewEntry
+                  } finally {
+                    setIsRegistering(false);
+                  }
+                }
+              }
+            ]
+          );
+          return; // Sai da função e espera resposta do usuário
+        }
       }
       
+      // Função para registrar nova entrada
+      await registerNewEntry(user);
+      
+    } catch (error) {
+      console.error('Erro ao registrar entrada:', error);
+      Alert.alert('Erro', 'Não foi possível registrar sua entrada. Tente novamente.');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+  
+  // Função auxiliar para registrar nova entrada
+  const registerNewEntry = async (user: any) => {
+    try {
       // Solicitar permissão de localização
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permissão negada', 'Precisamos da sua localização para registrar o ponto.');
-        setIsRegistering(false);
         return;
       }
       
@@ -166,11 +230,9 @@ export default function TimeRegisterPage() {
       
       await checkUserStatus();
       Alert.alert('Sucesso', 'Entrada registrada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao registrar entrada:', error);
-      Alert.alert('Erro', 'Não foi possível registrar sua entrada. Tente novamente.');
-    } finally {
-      setIsRegistering(false);
+    } catch (error: any) {
+      console.error('Erro ao registrar nova entrada:', error.response?.data || error);
+      throw error; // Propaga o erro para ser tratado na função principal
     }
   };
 

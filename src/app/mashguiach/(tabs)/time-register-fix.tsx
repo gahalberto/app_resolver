@@ -200,7 +200,7 @@ export default function TimeRegisterFixPage() {
         Alert.alert('Erro', response.data.error || 'Não foi possível registrar sua entrada no evento.');
       }
     } catch (error) {
-      console.error('Erro ao registrar entrada no evento:', error);
+      console.error('Erro ao registrar entradaaaaaaa no evento:', error);
       Alert.alert('Erro', 'Não foi possível registrar sua entrada no evento. Tente novamente.');
     } finally {
       setIsRegistering(false);

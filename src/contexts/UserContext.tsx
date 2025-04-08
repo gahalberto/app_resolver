@@ -61,6 +61,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   // Login
   const login = async (email: string, password: string) => {
+    console.log("Email:", email);
     try {
       const response = await api.post("/login", { email, password });
       console.log("Resposta do login:", response.data);
